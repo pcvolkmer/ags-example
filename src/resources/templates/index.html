@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>AGS-Example</title>
+    <style>
+        :root {
+            --blue: #649ed7;
+            --darkblue: #44698E;
+        }
+
+        * {
+            box-sizing: border-box;
+            color: #333;
+        }
+
+        body {
+            margin: 0 auto;
+            width: 600px;
+            font-family: sans-serif;
+            background: #f5f5f5;
+        }
+
+        button, input {
+            padding: .5em 1em;
+            font-size: 1.2em;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        button {
+            background-color: var(--blue);
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: var(--darkblue);
+            box-shadow: 1px 1px 2px #333;
+        }
+
+        input {
+            width: 100%;
+            border: 1px solid lightgray;
+            box-shadow: inset 1px 1px 4px lightgray;
+
+            transition: box-shadow .1s, border .1s;
+        }
+
+        input:focus {
+            box-shadow: 0 0 3px var(--blue);
+            border: 1px solid var(--blue);
+        }
+
+        main {
+            margin: 2em 0;
+        }
+
+        .entry {
+            margin: .5em 0;
+            padding: .5em;
+            border: 1px solid lightgray;
+            border-radius: 3px;
+            box-shadow: 1px 1px 4px lightgray;
+            background: white;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 1em;
+        }
+
+        .label {
+            width: 40%;
+            display: inline-block;
+        }
+
+        .large {
+            font-size: 1.2em;
+            margin: 0 0 .5em 0;
+            padding-bottom: .5em;
+            border-bottom: 1px dashed lightgray;
+        }
+
+        .grey-out * {
+            color: darkgray;
+        }
+    </style>
+</head>
+<body>
+    <h1>Proof of Concept</h1>
+    <h2>Gemeindeschlüssel aus PLZ und Ort ableiten</h2>
+
+    <p>
+        Für das Modellvorhaben §64e wird die Angabe eines Teils des Gemeindeschlüssels benötigt.
+        Diese Anwendung soll das Ermitteln der dazu benötigten Information anhand der Anschrift demonstrieren.
+    </p>
+
+    <form action="" method="get" autocomplete="on">
+
+        <p>
+            Bitte geben Sie eine Postleitzahl oder den Ortsnamen ein.
+        </p>
+
+        <div class="form-row">
+            <input type="text" name="q" value="{{ query }}" placeholder="PLZ und Ort" list="entries" oninput="updateDatalist(this.value)"/>
+            <button type="submit">Abrufen</button>
+        </div>
+
+        <datalist id="entries">
+        </datalist>
+
+    </form>
+
+    {% if query.trim().len() > 0 %}
+    <main>
+        {% if entries.len() == 1 %}
+        <h3>Folgendes wurde gefunden:</h3>
+        {% else if entries.len() < 25 %}
+        <h3>Es gibt {{ entries.len() }} Treffer:</h3>
+        {% else %}
+        <h3>Es gibt mindestens 25 Treffer:</h3>
+        {% endif %}
+        {% for entry in entries %}
+        <div class="entry">
+            <div class="large">
+                <div><strong class="label">Gemeindeschlüssel:</strong> <span class="key">{{ entry.gemeindeschluessel }}</span></div>
+                <div><strong class="label">Kreisschlüssel:</strong> <span class="key">{{ entry.kreisschluessel }}</span></div>
+            </div>
+            <div><strong class="label">PLZ Ort:</strong> {{ entry.plz }} {{ entry.ort}}</div>
+            {% if entry.kreisfrei %}
+            <div class="grey-out"><strong class="label">Kreis:</strong> <i>kreisfreie Stadt</i></div>
+            {% else %}
+            <div><strong class="label">Kreis:</strong> {{ entry.kreis }}</div>
+            {% endif %}
+            <div><strong class="label">Bundesland:</strong> {{ entry.bundesland }}</div>
+        </div>
+        {% endfor %}
+    </main>
+    {% endif %}
+</body>
+<script>
+
+    Array.from(document.getElementsByClassName('key')).forEach(elem => {
+       elem.innerText = [
+           elem.innerText.slice(0,2),
+           elem.innerText.slice(2,3),
+           elem.innerText.slice(3,5),
+           elem.innerText.slice(5,8)
+       ].join(' ');
+    });
+
+    function updateDatalist(value) {
+        let path = document.location.pathname.length === 0 ? '' : document.location.pathname + '/api';
+        fetch(`${path}?q=${value}`)
+            .then(res => res.json())
+            .then(sug => {
+                let entriesElem = document.getElementById('entries');
+                entriesElem.innerHTML = '';
+                sug
+                    .map(entry => {
+                        let option = document.createElement('option');
+                        option.value = `${entry.plz} ${entry.ort}`;
+                        option.innerText = `${entry.plz} ${entry.ort}`;
+                        return option;
+                    })
+                    .forEach(option => {
+                       entriesElem.appendChild(option);
+                    });
+            });
+    }
+</script>
+</html>
