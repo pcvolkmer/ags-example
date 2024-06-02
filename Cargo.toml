@@ -9,9 +9,16 @@ license = "AGPL-3"
 axum = { version = "0.7" }
 askama = { version = "0.12" }
 askama_axum = { version = "0.4" }
-tokio = { version = "1.38", features = ["full"] }
+tokio = { version = "1.38", features = ["rt-multi-thread"] }
 
 serde = { version = "1.0", features = ["derive"] }
 csv = { version = "1.3" }
 
 itertools = { version = "0.13" }
+
+[profile.release]
+opt-level = "s"
+codegen-units = 1
+lto = "thin"
+strip = true
+panic = "abort"
