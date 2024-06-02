@@ -79,6 +79,10 @@
             background: white;
         }
 
+        .entry.similar {
+            background: repeating-linear-gradient( -45deg, #f5f5f5, #f5f5f5 5px, white 5px, white 25px );
+        }
+
         .cards {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -165,7 +169,9 @@
 
     {% if query.trim().len() > 0 %}
     <main>
-        {% if entries.len() == 1 %}
+        {% if entries.len() == 0 %}
+        <h3>Es wurde nichts gefunden</h3>
+        {% else if entries.len() == 1 %}
         <h3>Folgendes wurde gefunden:</h3>
         {% else if entries.len() < 25 %}
         <h3>Es gibt {{ entries.len() }} Treffer:</h3>
@@ -173,12 +179,23 @@
         <h3>Es gibt mindestens 25 Treffer:</h3>
         {% endif %}
         {% for entry in entries %}
+        {% if entry.similarity == 100 %}
         <div class="entry">
+        {% else %}
+        <div class="entry similar">
+        {% endif %}
             <div class="large sep">
                 <div><strong class="label">Gemeindeschlüssel:</strong> <span class="key">{{ entry.gemeindeschluessel }}</span></div>
                 <div><strong class="label">Kreisschlüssel:</strong> <span class="key">{{ entry.kreisschluessel }}</span></div>
             </div>
-            <div><strong class="label">PLZ Ort:</strong> {{ entry.plz }} {{ entry.ort}}</div>
+            <div>
+                {% if entry.similarity == 100 %}
+                <strong class="label">PLZ Ort:</strong> {{ entry.plz }} {{ entry.ort}}
+                {% else %}
+                <strong class="label">PLZ Ort:</strong> {{ entry.plz }} {{ entry.ort}}
+                <small class="grey-out">(Ähnlichkeit: {{ entry.similarity }}&percnt;)</small>
+                {% endif %}
+            </div>
             {% if entry.kreisfrei %}
             <div class="grey-out"><strong class="label">Kreis:</strong> <i>kreisfreie Stadt</i></div>
             {% else %}

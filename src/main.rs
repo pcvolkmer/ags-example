@@ -1,12 +1,14 @@
 use std::collections::HashMap;
+
 use askama::Template;
-use axum::response::{IntoResponse, Response};
 use axum::{Json, Router};
 use axum::extract::Query;
+use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use csv::{ReaderBuilder, StringRecord};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+use strsim::jaro_winkler;
 
 static AGS_CSV: &str = include_str!("resources/ags.csv");
 
@@ -19,7 +21,8 @@ struct Entry {
     ort: String,
     #[serde(skip_serializing_if = "String::is_empty")]
     kreis: String,
-    bundesland: String
+    bundesland: String,
+    similarity: u8
 }
 
 impl Entry {
@@ -32,6 +35,7 @@ impl Entry {
             ort: record.get(2).unwrap().to_string(),
             kreis: record.get(3).unwrap().to_string(),
             bundesland: record.get(4).unwrap().to_string(),
+            similarity: 100
         }
     }
 }
@@ -56,12 +60,16 @@ fn find_entries(query: String) -> Vec<Entry> {
         .filter(|record| record.is_ok())
         .map(|record| record.unwrap())
         .map(|record| Entry::from_record(record))
-        .filter(|entry|
-            entry.plz.starts_with(&query)
-                || entry.ort.starts_with(&query)
-                || format!("{} {}", entry.plz, entry.ort).starts_with(&query)
-
-        )
+        .map(|mut entry| {
+            if format!("{} {}", entry.plz, entry.ort.to_lowercase()).starts_with(&query.to_lowercase()) {
+                entry.similarity = 100
+            } else {
+                entry.similarity = (100.0 * jaro_winkler(&query.to_lowercase(), &entry.ort.to_lowercase())) as u8
+            }
+            entry
+        })
+        .filter(|entry| entry.similarity > 90)
+        .sorted_by(|e1, e2| e2.similarity.cmp(&e1.similarity))
         .take(25)
         .collect::<Vec<Entry>>()
 }
