@@ -5,6 +5,7 @@ use axum::{Json, Router};
 use axum::extract::Query;
 use axum::routing::get;
 use csv::{ReaderBuilder, StringRecord};
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 static AGS_CSV: &str = include_str!("resources/ags.csv");
@@ -39,6 +40,7 @@ impl Entry {
 #[template(path = "index.html")]
 struct IndexTemplate {
     query: String,
+    multiple_assigned: Vec<String>,
     entries: Vec<Entry>
 }
 
@@ -64,15 +66,44 @@ fn find_entries(query: String) -> Vec<Entry> {
         .collect::<Vec<Entry>>()
 }
 
+fn find_multiple_assigned_zips() -> Vec<String> {
+    ReaderBuilder::new().from_reader(AGS_CSV.as_bytes())
+        .records()
+        .filter(|record| record.is_ok())
+        .map(|record| record.unwrap())
+        .map(|record| Entry::from_record(record))
+        .map(|entry| (entry.plz.to_string(), entry.kreisschluessel.to_string()))
+        .sorted_by(|e1, e2| e1.0.cmp(&e2.0))
+        .chunk_by(|entry| entry.0.to_string())
+        .into_iter()
+        .map(|(zip, entries)| (zip, entries.unique().collect_vec()))
+        .filter(|(_, entries)| entries.len() > 1 )
+        .into_iter()
+        .map(|(a, _)| a)
+        .unique()
+        .collect::<Vec<_>>()
+}
+
 async fn api_search(query: Query<HashMap<String, String>>) -> Response {
+    if query.get("ma").unwrap_or(&String::new()).to_string() == "1" {
+        return Json::from(find_multiple_assigned_zips()).into_response()
+    }
+
     let query = query.get("q").unwrap_or(&String::new()).to_string();
     Json::from(find_entries(query)).into_response()
 }
 
 async fn index(query: Query<HashMap<String, String>>) -> IndexTemplate {
+    let multiple_assigned = if query.get("ma").unwrap_or(&String::new()).to_string() == "1" {
+       find_multiple_assigned_zips()
+    } else {
+        vec![]
+    };
+
     let query = query.get("q").unwrap_or(&String::new()).to_string();
     IndexTemplate {
         query: query.to_string(),
+        multiple_assigned,
         entries: find_entries(query.to_string())
     }
 }
