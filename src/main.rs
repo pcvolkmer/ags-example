@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
 use askama::Template;
+use axum::{Json, Router};
 use axum::extract::Query;
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
-use axum::{Json, Router};
 use csv::{ReaderBuilder, StringRecord};
 use itertools::Itertools;
 use lazy_static::lazy_static;
@@ -32,7 +32,7 @@ struct Entry {
 }
 
 impl Entry {
-    fn from_record(record: StringRecord) -> Entry {
+    fn from_record(record: &StringRecord) -> Entry {
         Self {
             gemeindeschluessel: record.get(0).unwrap().to_string(),
             kreisschluessel: record.get(0).unwrap()[0..5].to_string(),
@@ -44,6 +44,11 @@ impl Entry {
             similarity: 0,
         }
     }
+
+    fn with_similarity(mut self, similarity: u8) -> Entry {
+        self.similarity = similarity;
+        self
+    }
 }
 
 #[derive(Template)]
@@ -54,6 +59,16 @@ struct IndexTemplate {
     entries: Vec<Entry>,
 }
 
+fn all_entries() -> Vec<Entry> {
+    ReaderBuilder::new()
+        .from_reader(AGS_CSV.as_bytes())
+        .records()
+        .filter(|record| record.is_ok())
+        .map(|record| record.unwrap())
+        .map(|record| Entry::from_record(&record))
+        .collect_vec()
+}
+
 fn find_entries(query: String) -> Vec<Entry> {
     let query = query.trim().to_lowercase();
 
@@ -61,19 +76,14 @@ fn find_entries(query: String) -> Vec<Entry> {
         return vec![];
     }
 
-    ReaderBuilder::new()
-        .from_reader(AGS_CSV.as_bytes())
-        .records()
-        .filter(|record| record.is_ok())
-        .map(|record| record.unwrap())
-        .map(|record| Entry::from_record(record))
-        .map(|mut entry| {
+    all_entries()
+        .into_iter()
+        .map(|entry| {
             if entry.plz.to_lowercase().starts_with(&query)
                 || entry.ort.to_lowercase().starts_with(&query)
-                || format!("{} {}", entry.plz, entry.ort.to_lowercase())
-                    .starts_with(&query)
+                || format!("{} {}", entry.plz, entry.ort.to_lowercase()).starts_with(&query)
             {
-                entry.similarity = 100
+                return entry.with_similarity(100);
             } else if match PLZ_RE.captures(&query) {
                 Some(caps) => {
                     caps["plz"] == entry.plz
@@ -81,10 +91,10 @@ fn find_entries(query: String) -> Vec<Entry> {
                 }
                 _ => false,
             } {
-                entry.similarity = 100
+                return entry.with_similarity(100);
             } else if !PLZ_RE.is_match(&query) {
-                entry.similarity =
-                    (100.0 * jaro_winkler(&query, &entry.ort.to_lowercase())) as u8
+                let ort = &entry.ort.to_lowercase();
+                return entry.with_similarity((100.0 * jaro_winkler(&query, ort)) as u8);
             }
             entry
         })
@@ -95,12 +105,8 @@ fn find_entries(query: String) -> Vec<Entry> {
 }
 
 fn find_multiple_assigned_zips() -> Vec<String> {
-    ReaderBuilder::new()
-        .from_reader(AGS_CSV.as_bytes())
-        .records()
-        .filter(|record| record.is_ok())
-        .map(|record| record.unwrap())
-        .map(|record| Entry::from_record(record))
+    all_entries()
+        .iter()
         .map(|entry| (entry.plz.to_string(), entry.kreisschluessel.to_string()))
         .sorted_by(|e1, e2| e1.0.cmp(&e2.0))
         .chunk_by(|entry| entry.0.to_string())
