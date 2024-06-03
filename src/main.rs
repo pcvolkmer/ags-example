@@ -69,6 +69,27 @@ fn all_entries() -> Vec<Entry> {
         .collect_vec()
 }
 
+fn get_similarity(query: &str, entry: &Entry) -> u8 {
+    if entry.plz.to_lowercase().starts_with(&query)
+        || entry.ort.to_lowercase().starts_with(&query)
+        || format!("{} {}", entry.plz, entry.ort.to_lowercase()).starts_with(&query)
+    {
+        100
+    } else if match PLZ_RE.captures(&query) {
+        Some(caps) => {
+            caps["plz"] == entry.plz
+                && jaro_winkler(&caps["ort"], &entry.ort.to_lowercase()) >= 0.85
+        }
+        _ => false,
+    } {
+        100
+    } else if !PLZ_RE.is_match(&query) {
+        (100.0 * jaro_winkler(&query, &entry.ort.to_lowercase())) as u8
+    } else {
+        entry.similarity
+    }
+}
+
 fn find_entries(query: String) -> Vec<Entry> {
     let query = query.trim().to_lowercase();
 
@@ -79,24 +100,8 @@ fn find_entries(query: String) -> Vec<Entry> {
     all_entries()
         .into_iter()
         .map(|entry| {
-            if entry.plz.to_lowercase().starts_with(&query)
-                || entry.ort.to_lowercase().starts_with(&query)
-                || format!("{} {}", entry.plz, entry.ort.to_lowercase()).starts_with(&query)
-            {
-                return entry.with_similarity(100);
-            } else if match PLZ_RE.captures(&query) {
-                Some(caps) => {
-                    caps["plz"] == entry.plz
-                        && jaro_winkler(&caps["ort"], &entry.ort.to_lowercase()) >= 0.85
-                }
-                _ => false,
-            } {
-                return entry.with_similarity(100);
-            } else if !PLZ_RE.is_match(&query) {
-                let ort = &entry.ort.to_lowercase();
-                return entry.with_similarity((100.0 * jaro_winkler(&query, ort)) as u8);
-            }
-            entry
+            let similarity = get_similarity(&query, &entry);
+            entry.with_similarity(similarity)
         })
         .filter(|entry| entry.similarity >= 90)
         .sorted_by(|e1, e2| e2.similarity.cmp(&e1.similarity))
