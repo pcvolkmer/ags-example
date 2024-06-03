@@ -219,8 +219,8 @@
     });
 
     function updateDatalist(value) {
-        let url = document.location.origin + (document.location.origin.endsWith('/') ? 'api' : '/api');
-        fetch(`${url}?q=${value}`)
+        let url = document.location.origin + document.location.pathname + 'api';
+        fetch(`${url}?q=${value.trim()}`)
             .then(res => res.json())
             .then(sug => {
                 let entriesElem = document.getElementById('entries');
