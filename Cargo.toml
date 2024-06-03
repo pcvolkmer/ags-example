@@ -19,6 +19,9 @@ strsim = "0.11"
 regex = "1.10"
 lazy_static = "1.4"
 
+moka = { version = "0.12", features = ["future"] }
+futures = { version = "0.3" }
+
 [profile.release]
 opt-level = "s"
 codegen-units = 1

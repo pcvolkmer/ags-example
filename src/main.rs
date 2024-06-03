@@ -1,13 +1,15 @@
 use std::collections::HashMap;
+use std::time::Duration;
 
 use askama::Template;
 use axum::{Json, Router};
-use axum::extract::Query;
+use axum::extract::{Query, State};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use csv::{ReaderBuilder, StringRecord};
 use itertools::Itertools;
 use lazy_static::lazy_static;
+use moka::future::Cache;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use strsim::jaro_winkler;
@@ -18,7 +20,7 @@ lazy_static! {
     static ref PLZ_RE: Regex = Regex::new(r"^(?<plz>[0-9]{5})(\s+)(?<ort>.*)").unwrap();
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 struct Entry {
     gemeindeschluessel: String,
     kreisschluessel: String,
@@ -90,14 +92,18 @@ fn get_similarity(query: &str, entry: &Entry) -> u8 {
     }
 }
 
-fn find_entries(query: String) -> Vec<Entry> {
+async fn find_entries(query: String, cache: Cache<String, Vec<Entry>>) -> Vec<Entry> {
     let query = query.trim().to_lowercase();
 
     if query.is_empty() {
         return vec![];
     }
 
-    all_entries()
+    if let Some(entries) = cache.get(&query).await {
+        return entries;
+    }
+
+    let entries = all_entries()
         .into_iter()
         .map(|entry| {
             let similarity = get_similarity(&query, &entry);
@@ -106,7 +112,11 @@ fn find_entries(query: String) -> Vec<Entry> {
         .filter(|entry| entry.similarity >= 90)
         .sorted_by(|e1, e2| e2.similarity.cmp(&e1.similarity))
         .take(25)
-        .collect::<Vec<Entry>>()
+        .collect::<Vec<Entry>>();
+
+    cache.insert(query, entries.clone()).await;
+
+    entries
 }
 
 fn find_multiple_assigned_zips() -> Vec<String> {
@@ -124,16 +134,22 @@ fn find_multiple_assigned_zips() -> Vec<String> {
         .collect::<Vec<_>>()
 }
 
-async fn api_search(query: Query<HashMap<String, String>>) -> Response {
+async fn api_search(
+    State(cache): State<Cache<String, Vec<Entry>>>,
+    query: Query<HashMap<String, String>>,
+) -> Response {
     if query.get("ma").unwrap_or(&String::new()).to_string() == "1" {
         return Json::from(find_multiple_assigned_zips()).into_response();
     }
 
     let query = query.get("q").unwrap_or(&String::new()).trim().to_string();
-    Json::from(find_entries(query)).into_response()
+    Json::from(find_entries(query, cache).await).into_response()
 }
 
-async fn index(query: Query<HashMap<String, String>>) -> IndexTemplate {
+async fn index(
+    State(cache): State<Cache<String, Vec<Entry>>>,
+    query: Query<HashMap<String, String>>,
+) -> IndexTemplate {
     let multiple_assigned = if query.get("ma").unwrap_or(&String::new()).to_string() == "1" {
         find_multiple_assigned_zips()
     } else {
@@ -144,15 +160,22 @@ async fn index(query: Query<HashMap<String, String>>) -> IndexTemplate {
     IndexTemplate {
         query: query.trim().to_string(),
         multiple_assigned,
-        entries: find_entries(query.to_string()),
+        entries: find_entries(query.to_string(), cache).await,
     }
 }
 
 #[tokio::main]
 async fn main() {
+    let cache: Cache<String, Vec<Entry>> = Cache::builder()
+        .max_capacity(1000)
+        .time_to_live(Duration::from_secs(30 * 60))
+        .time_to_idle(Duration::from_secs(5 * 60))
+        .build();
+
     let app = Router::new()
         .route("/", get(index))
-        .route("/api", get(api_search));
+        .route("/api", get(api_search))
+        .with_state(cache);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap()
