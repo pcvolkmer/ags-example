@@ -193,7 +193,7 @@
                 <strong class="label">PLZ Ort:</strong> {{ entry.plz }} {{ entry.ort}}
                 {% else %}
                 <strong class="label">PLZ Ort:</strong> {{ entry.plz }} {{ entry.ort}}
-                <small class="grey-out">(Ähnlichkeit: {{ entry.similarity }}&percnt;)</small>
+                <small class="grey-out">(~{{ entry.similarity }}&percnt;)</small>
                 {% endif %}
             </div>
             {% if entry.kreisfrei %}
