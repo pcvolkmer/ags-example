@@ -206,36 +206,36 @@
         {% endfor %}
     </main>
     {% endif %}
+    <script>
+
+        Array.from(document.getElementsByClassName('key')).forEach(elem => {
+            elem.innerText = [
+                elem.innerText.slice(0,2),
+                elem.innerText.slice(2,3),
+                elem.innerText.slice(3,5),
+                elem.innerText.slice(5,8)
+            ].join(' ');
+        });
+
+        function updateDatalist(value) {
+            let url = document.location.origin + document.location.pathname + 'api';
+            fetch(`${url}?q=${value.trim()}`)
+                .then(res => res.json())
+                .then(sug => {
+                    let entriesElem = document.getElementById('entries');
+                    entriesElem.innerHTML = '';
+                    sug
+                        .map(entry => {
+                            let option = document.createElement('option');
+                            option.value = `${entry.plz} ${entry.ort}`;
+                            option.innerText = `${entry.plz} ${entry.ort}`;
+                            return option;
+                        })
+                        .forEach(option => {
+                            entriesElem.appendChild(option);
+                        });
+                });
+        }
+    </script>
 </body>
-<script>
-
-    Array.from(document.getElementsByClassName('key')).forEach(elem => {
-       elem.innerText = [
-           elem.innerText.slice(0,2),
-           elem.innerText.slice(2,3),
-           elem.innerText.slice(3,5),
-           elem.innerText.slice(5,8)
-       ].join(' ');
-    });
-
-    function updateDatalist(value) {
-        let url = document.location.origin + document.location.pathname + 'api';
-        fetch(`${url}?q=${value.trim()}`)
-            .then(res => res.json())
-            .then(sug => {
-                let entriesElem = document.getElementById('entries');
-                entriesElem.innerHTML = '';
-                sug
-                    .map(entry => {
-                        let option = document.createElement('option');
-                        option.value = `${entry.plz} ${entry.ort}`;
-                        option.innerText = `${entry.plz} ${entry.ort}`;
-                        return option;
-                    })
-                    .forEach(option => {
-                       entriesElem.appendChild(option);
-                    });
-            });
-    }
-</script>
 </html>
