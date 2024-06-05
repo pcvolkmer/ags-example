@@ -17,7 +17,7 @@ use strsim::jaro_winkler;
 static AGS_CSV: &str = include_str!("resources/ags.csv");
 
 lazy_static! {
-    static ref PLZ_RE: Regex = Regex::new(r"^(?<plz>[0-9]{5})(\s+)(?<ort>.*)").unwrap();
+    static ref PLZ_RE: Regex = Regex::new(r"^(?<plz>[0-9]{5})(\s+)(?<ort>.+)").unwrap();
 }
 
 #[derive(Serialize, Deserialize, Clone)]
