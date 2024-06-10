@@ -197,9 +197,9 @@
             </div>
             <div>
                 {% if entry.similarity == 100 %}
-                <strong class="label">PLZ Ort:</strong> {{ entry.plz }} {{ entry.ort}}
+                <strong class="label">PLZ Ort:</strong> <a href="?q={{ entry.plz }}%20{{ entry.ort }}">{{ entry.plz }} {{ entry.ort }}</a>
                 {% else %}
-                <strong class="label">PLZ Ort:</strong> {{ entry.plz }} {{ entry.ort}}
+                <strong class="label">PLZ Ort:</strong> <a href="?q={{ entry.plz }}%20{{ entry.ort }}">{{ entry.plz }} {{ entry.ort }}</a>
                 <small class="grey-out">(~{{ entry.similarity }}&percnt;)</small>
                 {% endif %}
             </div>
