@@ -79,6 +79,11 @@
             background: white;
         }
 
+        .entry.exact {
+            border-color: #64d76e;
+            background-color: rgba(100, 215, 110, 0.20);
+        }
+
         .entry.similar {
             background: repeating-linear-gradient( -45deg, #f5f5f5, #f5f5f5 5px, white 5px, white 25px );
         }
@@ -172,14 +177,16 @@
         {% if entries.len() == 0 %}
         <h3>Es wurde nichts gefunden</h3>
         {% else if entries.len() == 1 %}
-        <h3>Folgendes wurde gefunden:</h3>
+        <h3>Der folgende eindeutige Treffer wurde gefunden:</h3>
         {% else if entries.len() < 25 %}
         <h3>Es gibt {{ entries.len() }} Treffer:</h3>
         {% else %}
         <h3>Es gibt mindestens 25 Treffer:</h3>
         {% endif %}
         {% for entry in entries %}
-        {% if entry.similarity == 100 %}
+        {% if entries.len() == 1 %}
+        <div class="entry exact">
+        {% else if entry.similarity == 100 %}
         <div class="entry">
         {% else %}
         <div class="entry similar">
