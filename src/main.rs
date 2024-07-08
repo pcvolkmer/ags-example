@@ -15,6 +15,9 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use strsim::jaro_winkler;
 
+#[cfg(debug_assertions)]
+use tower_http::trace::TraceLayer;
+
 static AGS_CSV: &str = include_str!("resources/ags.csv");
 
 lazy_static! {
@@ -185,6 +188,13 @@ async fn negotiate(
 
 #[tokio::main]
 async fn main() {
+    #[cfg(debug_assertions)]
+    {
+        tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::DEBUG)
+            .init();
+    }
+
     let cache: Cache<String, Vec<Entry>> = Cache::builder()
         .max_capacity(1000)
         .time_to_live(Duration::from_secs(30 * 60))
@@ -196,6 +206,9 @@ async fn main() {
         .route("/api", get(api_search))
         .with_state(cache);
 
+    #[cfg(debug_assertions)]
+    let app = app.layer(TraceLayer::new_for_http());
+    
     let listener = tokio::net::TcpListener::bind("[::]:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap()
 }
