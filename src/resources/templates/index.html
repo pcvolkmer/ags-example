@@ -51,6 +51,8 @@
             background-color: var(--darkblue);
             box-shadow: 1px 1px 2px #333;
             text-decoration: none;
+
+            transition: background-color .1s, box-shadow .1s, box-shadow .1s;
         }
 
         input {
@@ -150,7 +152,7 @@
         </p>
 
         <div class="centered">
-            <a class="button" href="?ma=1">Postleitzahlen abrufen</a>
+            <a class="button" href="?ma=1">Kreisübergreifend verwendete Postleitzahlen abrufen</a>
         </div>
 
         <datalist id="entries">
@@ -164,9 +166,7 @@
         <h3>Folgende Postleitzahlen werden in mehreren Kreisen verwendet:</h3>
         <div class="cards">
             {% for entry in multiple_assigned %}
-            <div class="entry">
-                <div class="large centered"><a href="?q={{ entry }}" title="Orte für Postleitzahl '{{ entry }}' anzeigen">{{ entry }}</a></div>
-            </div>
+            <a class="button centered" href="?q={{ entry }}" title="Orte für Postleitzahl '{{ entry }}' anzeigen">{{ entry }}</a>
             {% endfor %}
         </div>
     </main>
