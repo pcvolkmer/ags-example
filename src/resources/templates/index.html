@@ -123,6 +123,24 @@
         .grey-out * {
             color: darkgray;
         }
+
+        .zip-region-header {
+            display: flex;
+            gap: 1em;
+            margin: 1em 0;
+            font-size: small;
+            font-weight: bold;
+        }
+
+        .zip-region-header * {
+            white-space: nowrap;
+        }
+
+        .zip-region-header hr {
+            width: 100%;
+            border: none;
+            border-top: 1px solid lightgray;
+        }
     </style>
 </head>
 <body>
@@ -164,11 +182,14 @@
     {% if multiple_assigned.len() > 0 %}
     <main>
         <h3>Folgende Postleitzahlen werden in mehreren Kreisen verwendet:</h3>
+        {% for region in multiple_assigned %}
+        <div class="zip-region-header"><span>Postleitzahlregion {{ region.0 }}</span><hr/></div>
         <div class="cards">
-            {% for entry in multiple_assigned %}
+            {% for entry in region.1 %}
             <a class="button centered" href="?q={{ entry }}" title="Orte für Postleitzahl '{{ entry }}' anzeigen">{{ entry }}</a>
             {% endfor %}
         </div>
+        {% endfor %}
     </main>
     {% endif %}
 

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::time::Duration;
 
 use askama::Template;
@@ -57,7 +57,7 @@ impl Entry {
 #[template(path = "index.html")]
 struct IndexTemplate {
     query: String,
-    multiple_assigned: Vec<String>,
+    multiple_assigned: BTreeMap<String, Vec<String>>,
     entries: Vec<Entry>,
 }
 
@@ -119,7 +119,7 @@ async fn find_entries(query: String, cache: Cache<String, Vec<Entry>>) -> Vec<En
     entries
 }
 
-fn find_multiple_assigned_zips() -> Vec<String> {
+fn find_multiple_assigned_zips() -> BTreeMap<String, Vec<String>> {
     all_entries()
         .iter()
         .map(|entry| (entry.plz.to_string(), entry.kreisschluessel.to_string()))
@@ -131,7 +131,9 @@ fn find_multiple_assigned_zips() -> Vec<String> {
         .into_iter()
         .map(|(a, _)| a)
         .unique()
-        .collect::<Vec<_>>()
+        .into_group_map_by(|entry| format!("{}...", entry[0..1].to_string()))
+        .into_iter()
+        .collect::<BTreeMap<_,_>>()
 }
 
 async fn api_search(
@@ -153,7 +155,7 @@ async fn index(
     let multiple_assigned = if query.get("ma").unwrap_or(&String::new()).to_string() == "1" {
         find_multiple_assigned_zips()
     } else {
-        vec![]
+        BTreeMap::new()
     };
 
     let query = query.get("q").unwrap_or(&String::new()).to_string();
