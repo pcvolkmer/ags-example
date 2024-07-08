@@ -246,8 +246,8 @@
         });
 
         function updateDatalist(value) {
-            let url = document.location.origin + document.location.pathname + 'api';
-            fetch(`${url}?q=${value.trim()}`)
+            let url = document.location.origin + document.location.pathname;
+            fetch(`${url}?q=${value.trim()}`, { headers: new Headers({ 'Accept': 'application/json' })})
                 .then(res => res.json())
                 .then(sug => {
                     let entriesElem = document.getElementById('entries');

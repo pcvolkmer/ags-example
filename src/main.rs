@@ -4,6 +4,7 @@ use std::time::Duration;
 use askama::Template;
 use axum::{Json, Router};
 use axum::extract::{Query, State};
+use axum::http::{header, HeaderMap};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use csv::{ReaderBuilder, StringRecord};
@@ -166,6 +167,22 @@ async fn index(
     }
 }
 
+async fn negotiate(
+    headers: HeaderMap,
+    state_cache: State<Cache<String, Vec<Entry>>>,
+    query: Query<HashMap<String, String>>,
+) -> impl IntoResponse {
+    match headers.get(header::ACCEPT) {
+        Some(header) => match header.to_str().unwrap_or_default() {
+            "application/json" => api_search(state_cache, query).await.into_response(),
+            _ => index(state_cache, query).await.into_response()
+        },
+        _ => {
+            index(state_cache, query).await.into_response()
+        }
+    }
+}
+
 #[tokio::main]
 async fn main() {
     let cache: Cache<String, Vec<Entry>> = Cache::builder()
@@ -175,7 +192,7 @@ async fn main() {
         .build();
 
     let app = Router::new()
-        .route("/", get(index))
+        .route("/", get(negotiate))
         .route("/api", get(api_search))
         .with_state(cache);
 
