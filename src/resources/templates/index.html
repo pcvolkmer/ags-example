@@ -159,7 +159,7 @@
         </p>
 
         <div class="form-row">
-            <input type="text" name="q" value="{{ query }}" placeholder="PLZ und Ort" list="entries" oninput="updateDatalist(this.value)"/>
+            <input type="text" name="q" value="{{ query }}" placeholder="PLZ und Ort" list="entries" oninput="updateDatalistDebounced(this.value)"/>
             <button type="submit">Abrufen</button>
         </div>
 
@@ -245,6 +245,14 @@
             ].join(' ');
         });
 
+        function debounce(func, timeout = 500) {
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => { func.apply(this, args); }, timeout);
+            }
+        }
+
         function updateDatalist(value) {
             let url = document.location.origin + document.location.pathname;
             fetch(`${url}?q=${value.trim()}`, { headers: new Headers({ 'Accept': 'application/json' })})
@@ -264,6 +272,8 @@
                         });
                 });
         }
+
+        const updateDatalistDebounced = debounce((value) => updateDatalist(value));
     </script>
 </body>
 </html>
