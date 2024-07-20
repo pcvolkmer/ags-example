@@ -12,6 +12,7 @@
         * {
             box-sizing: border-box;
             color: #333;
+            text-align: justify;
         }
 
         a {
@@ -24,8 +25,7 @@
         }
 
         body {
-            margin: 0 auto;
-            width: 600px;
+            margin: 0;
             font-family: sans-serif;
             background: #f5f5f5;
         }
@@ -45,6 +45,7 @@
             color: white;
             border: none;
             cursor: pointer;
+            display: inline-block;
         }
 
         button:hover, a.button:hover {
@@ -68,8 +69,33 @@
             border: 1px solid var(--blue);
         }
 
+        header {
+            position: sticky;
+            top: 0;
+
+            padding: 1em 0;
+
+            background: #eee;
+            border-top: 1px solid transparent;
+            border-bottom: 1px solid lightgrey;
+
+            box-shadow: 0 1px 4px lightgrey;
+        }
+
+        header:after {
+            content: ' ';
+            display: block;
+            height: 1em;
+        }
+
         main {
-            margin: 2em 0;
+            margin: 1em auto;
+            width: 600px;
+        }
+
+        .content {
+            margin: 0 auto;
+            width: 600px;
         }
 
         .entry {
@@ -141,43 +167,59 @@
             border: none;
             border-top: 1px solid lightgray;
         }
+
+        .infobox {
+            margin-top: 1em;
+            padding: 1em;
+
+            border: 1px solid lightgrey;
+            border-radius: 3px;
+            box-shadow: 1px 1px 4px lightgray;
+
+            background-color: white;
+        }
     </style>
 </head>
 <body>
-    <h1>Proof of Concept</h1>
-    <h2>Gemeindeschlüssel aus PLZ und Ort ableiten</h2>
+    <header class="stickyhead">
+        <div class="content">
+            <h1>Proof of Concept</h1>
+            <h2>Gemeindeschlüssel aus PLZ und Ort ableiten</h2>
 
-    <p>
-        Für das Modellvorhaben §64e wird die Angabe eines Teils des Gemeindeschlüssels benötigt.
-        Diese Anwendung soll das Ermitteln der dazu benötigten Information anhand der Anschrift demonstrieren.
-    </p>
+            <p>
+                Für das Modellvorhaben § 64e SGB V wird die Angabe eines Teils des Gemeindeschlüssels benötigt.
+                Diese Anwendung soll das Ermitteln der dazu benötigten Information anhand der Anschrift demonstrieren.
+            </p>
 
-    <form action="" method="get" autocomplete="on">
+            <p>
+                Bitte geben Sie eine Postleitzahl oder den Ortsnamen ein.
+            </p>
 
-        <p>
-            Bitte geben Sie eine Postleitzahl oder den Ortsnamen ein.
-        </p>
+            <form action="" method="get" autocomplete="on">
 
-        <div class="form-row">
-            <input type="text" name="q" value="{{ query }}" placeholder="PLZ und Ort" list="entries" oninput="updateDatalistDebounced(this.value)"/>
-            <button type="submit">Abrufen</button>
+                <div class="form-row">
+                    <input type="text" name="q" value="{{ query }}" placeholder="PLZ und Ort" list="entries" oninput="updateDatalistDebounced(this.value)"/>
+                    <button type="submit">Abrufen</button>
+                </div>
+
+                <div class="infobox">
+                    <p>
+                        <strong>Achtung!</strong>
+                        Einige Postleitzahlen werden für mehrere Ortschaften und kreisübergreifend verwendet.
+                        Rufen Sie alle Postleitzahlen ab, deren Zugehörigkeit sich über mehrere Landkreise erstreckt.
+                    </p>
+                    <div class="centered">
+                        <a class="button" href="?ma=1">Kreisübergreifend verwendete Postleitzahlen abrufen</a>
+                    </div>
+                </div>
+
+                <datalist id="entries">
+                    <option value="97070 Würzburg">97070 Würzburg</option>
+                </datalist>
+
+            </form>
         </div>
-
-        <p>
-            <strong>Achtung!</strong>
-            Einige Postleitzahlen werden für mehrere Ortschaften und kreisübergreifend verwendet.
-            Rufen Sie alle Postleitzahlen ab, deren Zugehörigkeit sich über mehrere Landkreise erstreckt.
-        </p>
-
-        <div class="centered">
-            <a class="button" href="?ma=1">Kreisübergreifend verwendete Postleitzahlen abrufen</a>
-        </div>
-
-        <datalist id="entries">
-            <option value="97070 Würzburg">97070 Würzburg</option>
-        </datalist>
-
-    </form>
+    </header>
 
     {% if multiple_assigned.len() > 0 %}
     <main>
