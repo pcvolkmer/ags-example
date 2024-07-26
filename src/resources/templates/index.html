@@ -179,15 +179,22 @@
             background-color: white;
         }
 
+        .key {
+            width: 6em;
+            display: inline-block;
+        }
+
+        .float-right {
+            float: right;
+        }
+
         .position > span {
-            display: grid inline;
-            grid-template-columns: repeat(1, 1fr);
             vertical-align: middle;
         }
 
         .position * {
             color: var(--blue);
-            font-size: x-small;
+            font-size: small;
         }
 
         .position:before {
@@ -282,10 +289,18 @@
         <div class="entry similar">
         {% endif %}
             <div class="large sep">
-                <div><strong class="label">Gemeindeschlüssel:</strong> <span class="key">{{ entry.gemeindeschluessel }}</span></div>
+                <div class="float-right">
+                    {% if entry.kreisfrei %}
+                    <a class="position" href="https://nominatim.openstreetmap.org/ui/search.html?county={{entry.ort}}" target="_blank" title="In OpenStreetMap anzeigen"><span>{{entry.kreis_lat}} , {{entry.kreis_lon}}</span></a>
+                    {% else %}
+                    <a class="position" href="https://nominatim.openstreetmap.org/ui/search.html?county={{entry.kreis}}" target="_blank" title="In OpenStreetMap anzeigen"><span>{{entry.kreis_lat}} , {{entry.kreis_lon}}</span></a>
+                    {% endif %}
+                </div>
+                <div><strong class="label">Gemeindeschlüssel:</strong>
+                    <span class="key">{{ entry.gemeindeschluessel }}</span>
+                </div>
                 <div><strong class="label">Kreisschlüssel:</strong>
                     <span class="key">{{ entry.kreisschluessel }}</span>
-                    <a class="position" href="https://nominatim.openstreetmap.org/ui/search.html?county={{entry.kreis}}" target="_blank" title="In OpenStreetMap anzeigen"><span><span>{{entry.kreis_lat}}</span><span>{{entry.kreis_lon}}</span></span></a>
                 </div>
             </div>
             <div>
