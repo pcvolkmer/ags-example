@@ -6,4 +6,9 @@ Der entsprechende Teil kennzeichnet den Landkreis oder die kreisfreie Stadt.
 Diese Anwendung soll das Ermitteln der dazu benötigten Information anhand der Anschrift demonstrieren.
 
 Zudem wird ermittelt, welche Postleitzahlen in mehreren Landkreisen verwendet werden und daher die Postleitzahl alleine
-nicht zur Ermittlung des Kreisschlüssels genügt. 
+nicht zur Ermittlung des Kreisschlüssels genügt.
+
+## Geokoordinaten
+
+Die Angaben zu den Koordinaten eines Kreises wurden
+mittels [OpenStreetMap](https://nominatim.openstreetmap.org/ui/search.html) ermittelt.  
