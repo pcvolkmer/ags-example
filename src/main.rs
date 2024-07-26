@@ -33,6 +33,8 @@ struct Entry {
     ort: String,
     #[serde(skip_serializing_if = "String::is_empty")]
     kreis: String,
+    kreis_lat: String,
+    kreis_lon: String,
     bundesland: String,
     similarity: u8,
 }
@@ -46,6 +48,8 @@ impl Entry {
             plz: record.get(1).unwrap().to_string(),
             ort: record.get(2).unwrap().to_string(),
             kreis: record.get(3).unwrap().to_string(),
+            kreis_lat: record.get(5).unwrap().to_string(),
+            kreis_lon: record.get(6).unwrap().to_string(),
             bundesland: record.get(4).unwrap().to_string(),
             similarity: 0,
         }

@@ -178,6 +178,33 @@
 
             background-color: white;
         }
+
+        .position > span {
+            display: grid inline;
+            grid-template-columns: repeat(1, 1fr);
+            vertical-align: middle;
+        }
+
+        .position * {
+            color: var(--blue);
+            font-size: x-small;
+        }
+
+        .position:before {
+            content: "📍";
+            color: inherit;
+            width: 1.6em;
+            display: inline-block;
+            font-size: small;
+        }
+
+        .position:hover:before {
+            content: "🗺";
+            color: #333;
+            width: 1.6em;
+            display: inline-block;
+            font-size: small;
+        }
     </style>
 </head>
 <body>
@@ -256,7 +283,10 @@
         {% endif %}
             <div class="large sep">
                 <div><strong class="label">Gemeindeschlüssel:</strong> <span class="key">{{ entry.gemeindeschluessel }}</span></div>
-                <div><strong class="label">Kreisschlüssel:</strong> <span class="key">{{ entry.kreisschluessel }}</span></div>
+                <div><strong class="label">Kreisschlüssel:</strong>
+                    <span class="key">{{ entry.kreisschluessel }}</span>
+                    <a class="position" href="https://nominatim.openstreetmap.org/ui/search.html?county={{entry.kreis}}" target="_blank" title="In OpenStreetMap anzeigen"><span><span>{{entry.kreis_lat}}</span><span>{{entry.kreis_lon}}</span></span></a>
+                </div>
             </div>
             <div>
                 {% if entry.similarity == 100 %}
@@ -269,7 +299,10 @@
             {% if entry.kreisfrei %}
             <div class="grey-out"><strong class="label">Kreis:</strong> <i>kreisfreie Stadt</i></div>
             {% else %}
-            <div><strong class="label">Kreis:</strong> {{ entry.kreis }}</div>
+            <div>
+                <strong class="label">Kreis:</strong>
+                <span>{{ entry.kreis }}</span>
+            </div>
             {% endif %}
             <div><strong class="label">Bundesland:</strong> {{ entry.bundesland }}</div>
         </div>
