@@ -289,18 +289,21 @@
         <div class="entry similar">
         {% endif %}
             <div class="large sep">
-                <div class="float-right">
-                    {% if entry.kreisfrei %}
-                    <a class="position" href="https://nominatim.openstreetmap.org/ui/search.html?county={{entry.ort}}" target="_blank" title="In OpenStreetMap anzeigen"><span>{{entry.kreis_lat}} , {{entry.kreis_lon}}</span></a>
-                    {% else %}
-                    <a class="position" href="https://nominatim.openstreetmap.org/ui/search.html?county={{entry.kreis}}" target="_blank" title="In OpenStreetMap anzeigen"><span>{{entry.kreis_lat}} , {{entry.kreis_lon}}</span></a>
-                    {% endif %}
-                </div>
                 <div><strong class="label">Gemeindeschlüssel:</strong>
                     <span class="key">{{ entry.gemeindeschluessel }}</span>
+                    <div class="float-right">
+                        <a class="position" href="https://nominatim.openstreetmap.org/ui/search.html?city={{entry.ort}}&postalcode={{entry.plz}}" target="_blank" title="Ort in OpenStreetMap anzeigen"><span>{{entry.lat}} , {{entry.lon}}</span></a>
+                    </div>
                 </div>
                 <div><strong class="label">Kreisschlüssel:</strong>
                     <span class="key">{{ entry.kreisschluessel }}</span>
+                    <div class="float-right">
+                        {% if entry.kreisfrei %}
+                        <a class="position" href="https://nominatim.openstreetmap.org/ui/search.html?county={{entry.ort}}" target="_blank" title="Kreis in OpenStreetMap anzeigen"><span>{{entry.kreis_lat}} , {{entry.kreis_lon}}</span></a>
+                        {% else %}
+                        <a class="position" href="https://nominatim.openstreetmap.org/ui/search.html?county={{entry.kreis}}" target="_blank" title="Kreis in OpenStreetMap anzeigen"><span>{{entry.kreis_lat}} , {{entry.kreis_lon}}</span></a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
             <div>

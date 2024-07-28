@@ -31,6 +31,8 @@ struct Entry {
     kreisfrei: bool,
     plz: String,
     ort: String,
+    lat: String,
+    lon: String,
     #[serde(skip_serializing_if = "String::is_empty")]
     kreis: String,
     kreis_lat: String,
@@ -47,9 +49,11 @@ impl Entry {
             kreisfrei: record.get(0).unwrap()[5..8].to_string() == "000",
             plz: record.get(1).unwrap().to_string(),
             ort: record.get(2).unwrap().to_string(),
+            lat: record.get(5).unwrap().to_string(),
+            lon: record.get(6).unwrap().to_string(),
             kreis: record.get(3).unwrap().to_string(),
-            kreis_lat: record.get(5).unwrap().to_string(),
-            kreis_lon: record.get(6).unwrap().to_string(),
+            kreis_lat: record.get(7).unwrap().to_string(),
+            kreis_lon: record.get(8).unwrap().to_string(),
             bundesland: record.get(4).unwrap().to_string(),
             similarity: 0,
         }
