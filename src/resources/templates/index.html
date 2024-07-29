@@ -56,6 +56,10 @@
             transition: background-color .1s, box-shadow .1s, box-shadow .1s;
         }
 
+        label:has(> input) {
+            width: 100%;
+        }
+
         input {
             width: 100%;
             border: 1px solid lightgray;
@@ -232,7 +236,9 @@
             <form action="" method="get" autocomplete="on">
 
                 <div class="form-row">
-                    <input type="text" name="q" value="{{ query }}" placeholder="PLZ und Ort" list="entries" oninput="updateDatalistDebounced(this.value)"/>
+                    <label>
+                        <input type="text" name="q" value="{{ query }}" placeholder="PLZ und Ort" list="entries" oninput="updateDatalistDebounced(this.value)"/>
+                    </label>
                     <button type="submit">Abrufen</button>
                 </div>
 
@@ -356,8 +362,8 @@
                     sug
                         .map(entry => {
                             let option = document.createElement('option');
-                            option.value = `${entry.plz} ${entry.ort}`;
-                            option.innerText = `${entry.plz} ${entry.ort}`;
+                            option.value = `${entry['plz']} ${entry['ort']}`;
+                            option.innerText = `${entry['plz']} ${entry['ort']}`;
                             return option;
                         })
                         .forEach(option => {
