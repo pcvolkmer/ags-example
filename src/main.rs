@@ -2,23 +2,26 @@ use std::collections::{BTreeMap, HashMap};
 use std::time::Duration;
 
 use askama::Template;
-use axum::{Json, Router};
-use axum::extract::{Query, State};
-use axum::http::{header, HeaderMap};
+use axum::body::Body;
+use axum::extract::{Path, Query, State};
+use axum::http::{header, HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
+use axum::{Json, Router};
 use csv::{ReaderBuilder, StringRecord};
+use include_dir::{include_dir, Dir};
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use moka::future::Cache;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use strsim::jaro_winkler;
-
 #[cfg(debug_assertions)]
 use tower_http::trace::TraceLayer;
 
 static AGS_CSV: &str = include_str!("resources/ags.csv");
+
+static ASSETS: Dir = include_dir!("src/resources/assets");
 
 lazy_static! {
     static ref PLZ_RE: Regex = Regex::new(r"^(?<plz>[0-9]{5})(\s+)(?<ort>.+)").unwrap();
@@ -194,6 +197,18 @@ async fn negotiate(
     }
 }
 
+async fn serve_asset(path: Option<Path<String>>) -> impl IntoResponse {
+    match path {
+        Some(path) => match ASSETS.get_file(path.to_string()) {
+            Some(file) =>  Response::builder()
+                .status(StatusCode::OK)
+                .body(Body::from(file.contents())),
+            None => Response::builder().status(404).body(Body::from("".as_bytes()))
+        }
+        None => Response::builder().status(400).body(Body::from("".as_bytes()))
+    }.unwrap()
+}
+
 #[tokio::main]
 async fn main() {
     #[cfg(debug_assertions)]
@@ -212,6 +227,7 @@ async fn main() {
     let app = Router::new()
         .route("/", get(negotiate))
         .route("/api", get(api_search))
+        .route("/assets/*path", get(|path| async { serve_asset(path).await }))
         .with_state(cache);
 
     #[cfg(debug_assertions)]
