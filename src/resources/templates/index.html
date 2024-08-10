@@ -9,6 +9,11 @@
             --darkblue: #44698E;
         }
 
+        ::placeholder {
+            color: darkgray;
+            opacity: 1;
+        }
+
         * {
             box-sizing: border-box;
             color: #333;
@@ -30,8 +35,8 @@
             background: #f5f5f5;
         }
 
-        button, a.button, input {
-            padding: .5em 1em;
+        button, a.button {
+            padding: .6rem 1rem;
             border-radius: 3px;
             outline: none;
         }
@@ -50,27 +55,69 @@
 
         button:hover, a.button:hover {
             background-color: var(--darkblue);
-            box-shadow: 1px 1px 2px #333;
             text-decoration: none;
 
             transition: background-color .1s, box-shadow .1s, box-shadow .1s;
         }
 
-        label:has(> input) {
-            width: 100%;
+        a.button {
+            box-shadow: 0 1px 2px #99a;
         }
 
-        input {
+        a.button:hover {
+            box-shadow: 0 2px 4px #99a;
+        }
+
+        label button {
+            font-size: medium;
+        }
+
+        label button:hover {
+            box-shadow: none;
+        }
+
+        label:has(> input) {
             width: 100%;
+            height: 3rem;
+            display: flex;
+            padding: 3px;
+            background-color: white;
+
             border: 1px solid lightgray;
-            box-shadow: inset 1px 1px 4px lightgray;
+            border-radius: 3px;
+            box-shadow: inset 1px 1px 3px lightgray;
 
             transition: box-shadow .1s, border .1s;
         }
 
-        input:focus {
+        label:has(> input:focus) {
             box-shadow: 0 0 3px var(--blue);
             border: 1px solid var(--blue);
+        }
+
+        label:before {
+            content: "PLZ und Ort";
+            color: darkgray;
+            font-size: 0.6rem;
+            width: fit-content;
+            display: block;
+            position: absolute;
+            margin: auto calc(.6rem + 3px);
+        }
+
+        label:has(> input:focus):before {
+            color: var(--darkblue)
+        }
+
+        label:has(> input:placeholder-shown):before {
+            display: none;
+        }
+
+        input {
+            width: 100%;
+            border: none;
+            margin: 0 .6rem;
+            outline: none;
         }
 
         header {
@@ -237,9 +284,9 @@
 
                 <div class="form-row">
                     <label>
-                        <input type="text" name="q" value="{{ query }}" placeholder="PLZ und Ort" list="entries" oninput="updateDatalistDebounced(this.value)"/>
+                        <input type="text" name="q" value="{{ query }}" placeholder="PLZ und Ort" list="entries" oninput="updateDatalistDebounced(this.value)" />
+                        <button type="submit">Abrufen</button>
                     </label>
-                    <button type="submit">Abrufen</button>
                 </div>
 
                 <div class="infobox">
