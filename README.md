@@ -8,6 +8,8 @@ Diese Anwendung soll das Ermitteln der dazu benötigten Information anhand der A
 Zudem wird ermittelt, welche Postleitzahlen in mehreren Landkreisen verwendet werden und daher die Postleitzahl alleine
 nicht zur Ermittlung des Kreisschlüssels genügt.
 
+![Screenshot](docs/screenshot.png)
+
 ## Geokoordinaten
 
 Die Angaben zu den Koordinaten eines Kreises wurden
