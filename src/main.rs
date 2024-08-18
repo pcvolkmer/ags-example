@@ -80,19 +80,18 @@ fn all_entries() -> Vec<Entry> {
     ReaderBuilder::new()
         .from_reader(AGS_CSV.as_bytes())
         .records()
-        .filter(|record| record.is_ok())
-        .map(|record| record.unwrap())
+        .flatten()
         .map(|record| Entry::from_record(&record))
         .collect_vec()
 }
 
 fn get_similarity(query: &str, entry: &Entry) -> u8 {
-    if entry.plz.to_lowercase().starts_with(&query)
-        || entry.ort.to_lowercase().starts_with(&query)
-        || format!("{} {}", entry.plz, entry.ort.to_lowercase()).starts_with(&query)
+    if entry.plz.to_lowercase().starts_with(query)
+        || entry.ort.to_lowercase().starts_with(query)
+        || format!("{} {}", entry.plz, entry.ort.to_lowercase()).starts_with(query)
     {
         100
-    } else if match PLZ_RE.captures(&query) {
+    } else if match PLZ_RE.captures(query) {
         Some(caps) => {
             caps["plz"] == entry.plz
                 && jaro_winkler(&caps["ort"], &entry.ort.to_lowercase()) >= 0.85
@@ -100,8 +99,8 @@ fn get_similarity(query: &str, entry: &Entry) -> u8 {
         _ => false,
     } {
         100
-    } else if !PLZ_RE.is_match(&query) {
-        (100.0 * jaro_winkler(&query, &entry.ort.to_lowercase())) as u8
+    } else if !PLZ_RE.is_match(query) {
+        (100.0 * jaro_winkler(query, &entry.ort.to_lowercase())) as u8
     } else {
         entry.similarity
     }
@@ -143,10 +142,9 @@ fn find_multiple_assigned_zips() -> BTreeMap<String, Vec<String>> {
         .into_iter()
         .map(|(zip, entries)| (zip, entries.unique().collect_vec()))
         .filter(|(_, entries)| entries.len() > 1)
-        .into_iter()
         .map(|(a, _)| a)
         .unique()
-        .into_group_map_by(|entry| format!("{}...", entry[0..1].to_string()))
+        .into_group_map_by(|entry| format!("{}...", &entry[0..1]))
         .into_iter()
         .collect::<BTreeMap<_,_>>()
 }
@@ -155,7 +153,7 @@ async fn api_search(
     State(cache): State<Cache<String, Vec<Entry>>>,
     query: Query<HashMap<String, String>>,
 ) -> Response {
-    if query.get("ma").unwrap_or(&String::new()).to_string() == "1" {
+    if *query.get("ma").unwrap_or(&String::new()) == "1" {
         return Json::from(find_multiple_assigned_zips()).into_response();
     }
 
@@ -167,7 +165,7 @@ async fn index(
     State(cache): State<Cache<String, Vec<Entry>>>,
     query: Query<HashMap<String, String>>,
 ) -> IndexTemplate {
-    let multiple_assigned = if query.get("ma").unwrap_or(&String::new()).to_string() == "1" {
+    let multiple_assigned = if *query.get("ma").unwrap_or(&String::new()) == "1" {
         find_multiple_assigned_zips()
     } else {
         BTreeMap::new()
