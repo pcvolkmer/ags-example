@@ -74,7 +74,9 @@
         <h3>Es gibt mindestens 25 Treffer:</h3>
         {% endif %}
         {% for entry in entries %}
-        {% if entries.len() == 1 %}
+        {% if entry.deprecated == true %}
+        <div class="entry deprecated">
+        {% else if entries.len() == 1 %}
         <div class="entry exact">
         {% else if entry.similarity == 100 %}
         <div class="entry">

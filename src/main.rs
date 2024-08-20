@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashMap};
 use std::time::Duration;
 
@@ -41,6 +42,7 @@ struct Entry {
     kreis_lat: String,
     kreis_lon: String,
     bundesland: String,
+    deprecated: bool,
     similarity: u8,
 }
 
@@ -58,6 +60,7 @@ impl Entry {
             kreis_lat: record.get(7).unwrap().to_string(),
             kreis_lon: record.get(8).unwrap().to_string(),
             bundesland: record.get(4).unwrap().to_string(),
+            deprecated: record.get(9).unwrap_or("1") == "1",
             similarity: 0,
         }
     }
@@ -125,6 +128,13 @@ async fn find_entries(query: String, cache: Cache<String, Vec<Entry>>) -> Vec<En
         })
         .filter(|entry| entry.similarity >= 90)
         .sorted_by(|e1, e2| e2.similarity.cmp(&e1.similarity))
+        .sorted_by(|e1, e2|
+            if e2.deprecated {
+                Ordering::Less
+            } else {
+                Ordering::Equal
+            }
+        )
         .take(25)
         .collect::<Vec<Entry>>();
 
