@@ -45,6 +45,7 @@ struct Entry {
     deprecated: bool,
     einwohner: Option<String>,
     similarity: u8,
+    zip_collision: bool
 }
 
 impl Entry {
@@ -67,11 +68,17 @@ impl Entry {
                 value => Some(value.to_string())
             },
             similarity: 0,
+            zip_collision: false
         }
     }
 
     fn with_similarity(mut self, similarity: u8) -> Entry {
         self.similarity = similarity;
+        self
+    }
+
+    fn with_zip_collision(mut self, zip_collision: bool) -> Entry {
+        self.zip_collision = zip_collision;
         self
     }
     
@@ -130,11 +137,22 @@ async fn find_entries(query: String, cache: Cache<String, Vec<Entry>>) -> Vec<En
         return entries;
     }
 
+    let all_multiple_assigned_zips = find_multiple_assigned_zips("")
+        .values()
+        .flatten()
+        .unique()
+        .map(|e| e.to_string())
+        .collect_vec();
+    
     let entries = all_entries()
         .into_iter()
         .map(|entry| {
             let similarity = get_similarity(&query, &entry);
             entry.with_similarity(similarity)
+        })
+        .map(|entry| {
+            let zip_collision = all_multiple_assigned_zips.contains(&entry.plz.to_string());
+            entry.with_zip_collision(zip_collision)
         })
         .filter(|entry| entry.similarity >= 90)
         .sorted_by(|e1, e2| e2.similarity.cmp(&e1.similarity))
@@ -159,13 +177,13 @@ fn find_multiple_assigned_zips(state: &str) -> BTreeMap<String, Vec<String>> {
     } else {
         state
     };
-    
+
     let zips_in_state = all_entries()
         .iter()
         .filter(|entry| entry.gemeindeschluessel.starts_with(state))
         .map(|entry| entry.plz.to_string())
         .collect_vec();
-    
+
     all_entries()
         .iter()
         .map(|entry| (entry.plz.to_string(), entry.kreisschluessel.to_string()))

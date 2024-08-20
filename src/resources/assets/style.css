@@ -1,6 +1,9 @@
 :root {
     --blue: #649ed7;
     --darkblue: #44698E;
+
+    --red: #d76464;
+    --darkred: #8e4444;
 }
 
 ::placeholder {
@@ -69,6 +72,41 @@ button, a.button {
 
 button:hover, a.button:hover {
     box-shadow: 0 2px 4px #99a;
+}
+
+.tag {
+    background-color: var(--blue);
+    color: white;
+    border: none;
+    display: inline-block;
+    cursor: help;
+
+    border-radius: .5rem;
+
+    font-size: .9rem;
+    padding: .2rem 1rem;
+    font-weight: normal;
+}
+
+.tag:hover {
+    text-decoration: none;
+}
+
+.tag.link:hover {
+    background-color: var(--darkblue);
+    transition: background-color .1s;
+}
+
+.tag.link {
+    cursor: pointer;
+}
+
+.tag.warn {
+    background-color: var(--red);
+}
+
+.tag.warn.link:hover {
+    background-color: var(--darkred);
 }
 
 label button {
@@ -191,7 +229,7 @@ main {
 
 .entry.deprecated {
     position: relative;
-    border-color: #d76464;
+    border-color: var(--red);
     background-color: rgba(215, 100, 100, 0.2);
 }
 

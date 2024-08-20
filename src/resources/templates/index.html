@@ -130,10 +130,8 @@
                 </div>
             </div>
             <div>
-                {% if entry.similarity == 100 %}
                 <strong class="label">PLZ Ort:</strong> <a href="?q={{ entry.plz }}%20{{ entry.ort }}&st={{ entry.get_state_id() }}">{{ entry.plz }} {{ entry.ort }}</a>
-                {% else %}
-                <strong class="label">PLZ Ort:</strong> <a href="?q={{ entry.plz }}%20{{ entry.ort }}&st={{ entry.get_state_id() }}">{{ entry.plz }} {{ entry.ort }}</a>
+                {% if entry.similarity < 100 %}
                 <small class="grey-out">(~{{ entry.similarity }}&percnt;)</small>
                 {% endif %}
             </div>
@@ -149,6 +147,17 @@
             {% if entry.einwohner.as_ref().is_some() %}
             <div class="sep"></div>
             <div><strong class="label">Einwohnerzahl (Ort):</strong> {{ entry.einwohner.as_ref().unwrap() }}</div>
+            {% endif %}
+            {% if entry.deprecated || entry.zip_collision %}
+            <div class="sep"></div>
+            <div>
+                {% if entry.deprecated %}
+                <a class="tag warn" title="Ort wurde eingemeindet und existiert nicht mehr selbständig">Eingemeindet</a>
+                {% endif %}
+                {% if entry.zip_collision %}
+                <a href="?q={{ entry.plz }}&st={{ entry.get_state_id() }}" class="tag link" title="Postleitzahl wird kreisübergreifend verwendet">Kreisübergreifende PLZ</a>
+                {% endif %}
+            </div>
             {% endif %}
         </div>
         {% endfor %}
