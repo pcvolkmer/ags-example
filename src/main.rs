@@ -43,6 +43,7 @@ struct Entry {
     kreis_lon: String,
     bundesland: String,
     deprecated: bool,
+    einwohner: String,
     similarity: u8,
 }
 
@@ -61,6 +62,7 @@ impl Entry {
             kreis_lon: record.get(8).unwrap().to_string(),
             bundesland: record.get(4).unwrap().to_string(),
             deprecated: record.get(9).unwrap_or("1") == "1",
+            einwohner: record.get(10).unwrap_or("0").to_string(),
             similarity: 0,
         }
     }

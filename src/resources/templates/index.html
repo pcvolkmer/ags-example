@@ -118,6 +118,10 @@
             </div>
             {% endif %}
             <div><strong class="label">Bundesland:</strong> {{ entry.bundesland }}</div>
+            {% if entry.deprecated == false %}
+            <div class="sep"></div>
+            <div><strong class="label">Einwohnerzahl (Ort):</strong> {{ entry.einwohner }}</div>
+            {% endif %}
         </div>
         {% endfor %}
     </main>

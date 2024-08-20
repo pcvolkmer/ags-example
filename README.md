@@ -13,4 +13,8 @@ nicht zur Ermittlung des Kreisschlüssels genügt.
 ## Geokoordinaten
 
 Die Angaben zu den Koordinaten eines Kreises wurden
-mittels [OpenStreetMap](https://nominatim.openstreetmap.org/ui/search.html) ermittelt.  
+mittels [OpenStreetMap](https://nominatim.openstreetmap.org/ui/search.html) ermittelt.
+
+Die Angaben zur Einwohnerzahl stammen aus
+der [Zensus Datenbank](https://ergebnisse.zensus2022.de/datenbank/online/statistic/1000A/table/1000A-0000) mit
+Stand 2022.
