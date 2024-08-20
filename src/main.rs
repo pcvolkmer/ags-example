@@ -74,6 +74,10 @@ impl Entry {
         self.similarity = similarity;
         self
     }
+    
+    fn get_state_id(&self) -> String {
+        self.kreisschluessel[0..2].to_string()
+    }
 }
 
 #[derive(Template)]
