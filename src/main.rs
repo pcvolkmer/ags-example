@@ -155,9 +155,15 @@ fn find_multiple_assigned_zips(state: &str) -> BTreeMap<String, Vec<String>> {
     } else {
         state
     };
-    all_entries()
+    
+    let zips_in_state = all_entries()
         .iter()
         .filter(|entry| entry.gemeindeschluessel.starts_with(state))
+        .map(|entry| entry.plz.to_string())
+        .collect_vec();
+    
+    all_entries()
+        .iter()
         .map(|entry| (entry.plz.to_string(), entry.kreisschluessel.to_string()))
         .sorted_by(|e1, e2| e1.0.cmp(&e2.0))
         .chunk_by(|entry| entry.0.to_string())
@@ -166,6 +172,7 @@ fn find_multiple_assigned_zips(state: &str) -> BTreeMap<String, Vec<String>> {
         .filter(|(_, entries)| entries.len() > 1)
         .map(|(a, _)| a)
         .unique()
+        .filter(|e| zips_in_state.contains(e))
         .into_group_map_by(|entry| format!("{}...", &entry[0..1]))
         .into_iter()
         .collect::<BTreeMap<_,_>>()
