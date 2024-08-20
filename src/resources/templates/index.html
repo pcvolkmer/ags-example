@@ -118,9 +118,9 @@
             </div>
             {% endif %}
             <div><strong class="label">Bundesland:</strong> {{ entry.bundesland }}</div>
-            {% if entry.deprecated == false %}
+            {% if entry.einwohner.as_ref().is_some() %}
             <div class="sep"></div>
-            <div><strong class="label">Einwohnerzahl (Ort):</strong> {{ entry.einwohner }}</div>
+            <div><strong class="label">Einwohnerzahl (Ort):</strong> {{ entry.einwohner.as_ref().unwrap() }}</div>
             {% endif %}
         </div>
         {% endfor %}

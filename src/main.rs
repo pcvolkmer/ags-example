@@ -43,7 +43,7 @@ struct Entry {
     kreis_lon: String,
     bundesland: String,
     deprecated: bool,
-    einwohner: String,
+    einwohner: Option<String>,
     similarity: u8,
 }
 
@@ -62,7 +62,10 @@ impl Entry {
             kreis_lon: record.get(8).unwrap().to_string(),
             bundesland: record.get(4).unwrap().to_string(),
             deprecated: record.get(9).unwrap_or("1") == "1",
-            einwohner: record.get(10).unwrap_or("0").to_string(),
+            einwohner: match record.get(10).unwrap_or("") {
+                "" => None,
+                value => Some(value.to_string())
+            },
             similarity: 0,
         }
     }
@@ -130,7 +133,7 @@ async fn find_entries(query: String, cache: Cache<String, Vec<Entry>>) -> Vec<En
         })
         .filter(|entry| entry.similarity >= 90)
         .sorted_by(|e1, e2| e2.similarity.cmp(&e1.similarity))
-        .sorted_by(|e1, e2|
+        .sorted_by(|_, e2|
             if e2.deprecated {
                 Ordering::Less
             } else {
@@ -199,7 +202,10 @@ async fn negotiate(
     match headers.get(header::ACCEPT) {
         Some(header) => match header.to_str().unwrap_or_default() {
             "application/json" => api_search(state_cache, query).await.into_response(),
-            _ => index(state_cache, query).await.into_response()
+            _ =>  match query.0.get("format") {
+                Some(format) if format == "json" => api_search(state_cache, query).await.into_response(),
+                _ => index(state_cache, query).await.into_response()
+            }
         },
         _ => {
             index(state_cache, query).await.into_response()
