@@ -108,11 +108,11 @@ label#query:before {
     margin: auto calc(.6rem + 3px);
 }
 
-label:has(> input:focus):before {
+label#query:has(> input:focus):before {
     color: var(--darkblue)
 }
 
-label:has(> input:placeholder-shown):before {
+label#query:has(> input:placeholder-shown):before {
     display: none;
 }
 
