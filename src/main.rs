@@ -81,6 +81,7 @@ impl Entry {
 struct IndexTemplate {
     query: String,
     multiple_assigned: BTreeMap<String, Vec<String>>,
+    state: String,
     entries: Vec<Entry>,
 }
 
@@ -148,9 +149,15 @@ async fn find_entries(query: String, cache: Cache<String, Vec<Entry>>) -> Vec<En
     entries
 }
 
-fn find_multiple_assigned_zips() -> BTreeMap<String, Vec<String>> {
+fn find_multiple_assigned_zips(state: &str) -> BTreeMap<String, Vec<String>> {
+    let state = if state.len() > 2 {
+        &state[0..2]
+    } else {
+        state
+    };
     all_entries()
         .iter()
+        .filter(|entry| entry.gemeindeschluessel.starts_with(state))
         .map(|entry| (entry.plz.to_string(), entry.kreisschluessel.to_string()))
         .sorted_by(|e1, e2| e1.0.cmp(&e2.0))
         .chunk_by(|entry| entry.0.to_string())
@@ -169,7 +176,7 @@ async fn api_search(
     query: Query<HashMap<String, String>>,
 ) -> Response {
     if *query.get("ma").unwrap_or(&String::new()) == "1" {
-        return Json::from(find_multiple_assigned_zips()).into_response();
+        return Json::from(find_multiple_assigned_zips(query.get("st").unwrap_or(&String::new()))).into_response();
     }
 
     let query = query.get("q").unwrap_or(&String::new()).trim().to_string();
@@ -180,8 +187,12 @@ async fn index(
     State(cache): State<Cache<String, Vec<Entry>>>,
     query: Query<HashMap<String, String>>,
 ) -> IndexTemplate {
+    let state = match query.get("st") {
+        Some(state) => state.to_string(),
+        None => String::new()
+    };
     let multiple_assigned = if *query.get("ma").unwrap_or(&String::new()) == "1" {
-        find_multiple_assigned_zips()
+        find_multiple_assigned_zips(&state)
     } else {
         BTreeMap::new()
     };
@@ -190,6 +201,7 @@ async fn index(
     IndexTemplate {
         query: query.trim().to_string(),
         multiple_assigned,
+        state,
         entries: find_entries(query.to_string(), cache).await,
     }
 }
