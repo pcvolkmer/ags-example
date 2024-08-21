@@ -74,6 +74,35 @@ button:hover, a.button:hover {
     box-shadow: 0 2px 4px #99a;
 }
 
+.tab {
+    background: #ccc;
+    color: inherit;
+    padding: .4rem 1em;
+    border-radius: 3px 3px 0 0;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: none;
+}
+
+.tab:hover,
+.tab.active {
+    background: var(--blue);
+    color: white;
+    box-shadow: none;
+}
+
+.tabcontent {
+    border: 1px solid var(--blue);
+    border-radius: 0 .5em .5em .5em;
+    display: none;
+    padding: 1em;
+    background: white;
+}
+
+.tabcontent.active {
+    display: block;
+}
+
 .tag {
     background-color: var(--blue);
     color: white;
@@ -345,4 +374,32 @@ main {
     width: 1.6em;
     display: inline-block;
     font-size: small;
+}
+
+#chart {
+    width: 560px;
+    height: 560px;
+}
+
+#chart.loading div:has(> canvas) {
+    display: none;
+}
+
+#chart.loading:before {
+    content: '';
+    width: 3rem;
+    height: 3rem;
+    border: 6px solid var(--blue);
+    border-radius: 50%;
+    border-top: 6px solid #eee;
+    display: block;
+    margin: 0 auto;
+    animation: spin 2s linear infinite;
+    position: relative;
+    top: 12rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }

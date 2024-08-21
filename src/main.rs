@@ -22,11 +22,76 @@ use tower_http::trace::TraceLayer;
 
 static AGS_CSV: &str = include_str!("resources/ags.csv");
 
+static GEO_JSON: &str = include_str!("resources/de_small.geojson");
+
 static ASSETS: Dir = include_dir!("src/resources/assets");
 
 lazy_static! {
     static ref PLZ_RE: Regex = Regex::new(r"^(?<plz>[0-9]{5})(\s+)(?<ort>.+)").unwrap();
 }
+
+// GeoJSON
+
+#[derive(Serialize, Deserialize, Clone)]
+struct GeoJson {
+    #[serde(rename="type")]
+    type_: String,
+    features: Vec<Feature>
+}
+
+impl GeoJson {
+
+    fn new() -> GeoJson {
+        Self {
+            type_: "FeatureCollection".to_string(),
+            features: vec![]
+        }
+    }
+
+    fn all_features() -> Vec<Feature> {
+        if let Ok(geo_json) = serde_json::from_str::<GeoJson>(GEO_JSON) {
+            return geo_json.features
+        }
+        vec![]
+    }
+
+    fn with_features(mut self, features: Vec<Feature>) -> GeoJson {
+        self.features.clear();
+        features.iter().for_each(|f| self.features.push(f.clone()));
+        self
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+struct Feature {
+    id: String,
+    geometry: Geometry,
+    properties: Properties,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(tag = "type")]
+enum Geometry {
+    Polygon(Polygon),
+    MultiPolygon(MultiPolygon)
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+struct MultiPolygon {
+    coordinates: Vec<Vec<Vec<Vec<f32>>>>
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+struct Polygon {
+    coordinates: Vec<Vec<Vec<f32>>>
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+struct Properties {
+    name: String
+}
+
+// AGS
 
 #[derive(Serialize, Deserialize, Clone)]
 struct Entry {
@@ -200,6 +265,32 @@ fn find_multiple_assigned_zips(state: &str) -> BTreeMap<String, Vec<String>> {
         .collect::<BTreeMap<_,_>>()
 }
 
+fn find_counties_multiple_assigned_zips(state: &str) -> Vec<String> {
+    let state = if state.len() > 2 {
+        &state[0..2]
+    } else {
+        state
+    };
+
+    let zips_in_state = all_entries()
+        .iter()
+        .filter(|entry| entry.gemeindeschluessel.starts_with(state))
+        .map(|entry| entry.plz.to_string())
+        .collect_vec();
+
+    all_entries()
+        .iter()
+        .map(|entry| (entry.plz.to_string(), entry.kreisschluessel.to_string()))
+        .sorted_by(|e1, e2| e1.0.cmp(&e2.0))
+        .chunk_by(|entry| entry.0.to_string())
+        .into_iter()
+        .map(|(zip, entries)| (zip, entries.unique().collect_vec()))
+        .filter(|(zip, entries)| zips_in_state.contains(zip) && entries.len() > 1)
+        .flat_map(|(_, a)| a.iter().map(|value| value.1.to_string()).collect_vec())
+        .unique()
+        .collect_vec()
+}
+
 async fn api_search(
     State(cache): State<Cache<String, Vec<Entry>>>,
     query: Query<HashMap<String, String>>,
@@ -210,6 +301,34 @@ async fn api_search(
 
     let query = query.get("q").unwrap_or(&String::new()).trim().to_string();
     Json::from(find_entries(query, cache).await).into_response()
+}
+
+async fn geojson(
+    query: Query<HashMap<String, String>>,
+) -> Response {
+    let state = match query.get("st") {
+        Some(state) => state.to_string(),
+        None => String::new()
+    };
+
+    let features = GeoJson::all_features()
+        .iter()
+        .filter(|&f| f.id.starts_with(&state))
+        .cloned()
+        .collect_vec();
+    
+    Json::from(GeoJson::new().with_features(features)).into_response()
+}
+
+async fn asg_with_multiple_assigned_zip(
+    query: Query<HashMap<String, String>>,
+) -> Response {
+    let state = match query.get("st") {
+        Some(state) => state.to_string(),
+        None => String::new()
+    };
+
+    Json::from(find_counties_multiple_assigned_zips(&state)).into_response()
 }
 
 async fn index(
@@ -283,6 +402,8 @@ async fn main() {
 
     let app = Router::new()
         .route("/", get(negotiate))
+        .route("/geojson", get(geojson))
+        .route("/counties_mu_zip", get(asg_with_multiple_assigned_zip))
         .route("/api", get(api_search))
         .route("/assets/*path", get(|path| async { serve_asset(path).await }))
         .with_state(cache);

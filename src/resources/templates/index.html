@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>AGS-Example</title>
     <link rel="stylesheet" href="assets/style.css">
+    <script src="assets/echarts.min.js"></script>
 </head>
 <body>
     <header class="stickyhead">
@@ -80,22 +81,35 @@
 
     {% if multiple_assigned.len() > 0 %}
     <main>
-        <h3>Folgende Postleitzahlen werden in mehreren Kreisen verwendet:</h3>
-        {% for region in multiple_assigned %}
-        <div class="zip-region-header"><span>Postleitzahlregion {{ region.0 }}</span><hr/></div>
-        <div class="cards">
-            {% for entry in region.1 %}
-            <a class="button centered" href="?q={{ entry }}&st={{ state }}" title="Orte für Postleitzahl '{{ entry }}' anzeigen">{{ entry }}</a>
-            {% endfor %}
+        <div>
+            <div class="tabs">
+                <button class="tab active" onclick="selectTab(this, 'tab-1');">Liste</button>
+                <button class="tab" onclick="selectTab(this, 'tab-2');">Karte</button>
+            </div>
+
+            <div id="tab-1" class="tabcontent active">
+                <h3>Postleitzahlen mit Verwendung in mehreren Kreisen</h3>
+                {% for region in multiple_assigned %}
+                <div class="zip-region-header"><span>Postleitzahlregion {{ region.0 }}</span><hr/></div>
+                <div class="cards">
+                    {% for entry in region.1 %}
+                    <a class="button centered" href="?q={{ entry }}&st={{ state }}" title="Orte für Postleitzahl '{{ entry }}' anzeigen">{{ entry }}</a>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+            <div id="tab-2" class="tabcontent">
+                <h3>Kreise mit Verwendung kreisübergreifender Postleitzahlen</h3>
+                <div id="chart"></div>
+            </div>
         </div>
-        {% endfor %}
     </main>
     {% endif %}
 
     {% if query.trim().len() > 0 %}
     <main>
         {% if entries.len() == 1 %}
-        <h3>Der folgende eindeutige Treffer wurde gefunden:</h3>
+        <h3>Der folgende eindeutige Treffer wurde gefunden</h3>
         {% else if entries.len() > 0 && entries.len() < 25 %}
         <h3>Es gibt {{ entries.len() }} Treffer:</h3>
         {% else if entries.len() >= 25 %}
@@ -164,7 +178,6 @@
     </main>
     {% endif %}
     <script>
-
         Array.from(document.getElementsByClassName('key')).forEach(elem => {
             elem.innerText = [
                 elem.innerText.slice(0,2),
@@ -203,6 +216,109 @@
         }
 
         const updateDatalistDebounced = debounce((value) => updateDatalist(value));
+
+        function selectTab(self, elem) {
+            Array.from(document.getElementsByClassName('tab')).forEach(e => e.className = 'tab');
+            self.className = 'tab active';
+
+            Array.from(document.getElementsByClassName('tabcontent')).forEach(e => e.className = 'tabcontent');
+            document.getElementById(elem).className = 'tabcontent active';
+
+            if (elem === 'tab-2') {
+                showMap();
+            }
+        }
+
+        function showMap() {
+            let chartElem = document.getElementById('chart');
+
+            if (chartElem === null) {
+                return;
+            }
+
+            chartElem.innerText = '';
+            chartElem.className = 'loading';
+            chartElem.setAttribute('_echarts_instance_', undefined);
+
+            let chart = echarts.init(chartElem);
+            let url = document.location.origin + document.location.pathname;
+            const urlParams = new URLSearchParams(window.location.search);
+            const state = urlParams.get('st');
+
+            Promise.allSettled([
+                fetch(`${url}geojson?st=${state}`, { headers: new Headers({ 'Accept': 'application/json' })})
+                    .then(res => res.json()),
+                fetch(`${url}counties_mu_zip?st=${state}`, { headers: new Headers({ 'Accept': 'application/json' })})
+                    .then(res => res.json())
+            ]).then(res => {
+                if (res[0].status === 'rejected' || res[1].status === 'rejected') {
+                    return;
+                }
+
+                echarts.registerMap('GEO', res[0].value);
+                let data = res[1].value.map(e => {
+                    if (e.startsWith("02") || e.startsWith("11")) {
+                        // HH, B
+                        return {name: e.substring(0, 2), value: 1};
+                    } else {
+                        return {name: e, value: 1};
+                    }
+                })
+
+                let option = {
+                    visualMap: {
+                        show: false,
+                        min: 0,
+                        max: 1,
+                        inRange: {
+                            color: ['transparent', '#d76464']
+                        },
+                        calculable: true
+                    },
+                    series: [
+                        {
+                            name: 'Kreise',
+                            type: 'map',
+                            map: 'GEO',
+                            // Merkatorprojektion
+                            projection: {
+                                project: (point) => [point[0] / 180 * Math.PI, -Math.log(Math.tan((Math.PI / 2 + point[1] / 180 * Math.PI) / 2))],
+                                unproject: (point) => [point[0] * 180 / Math.PI, 2 * 180 / Math.PI * Math.atan(Math.exp(point[1])) - 90]
+                            },
+                            emphasis: {
+                                label: {
+                                    backgroundColor: '#777',
+                                    color: '#fff',
+                                    position: 'bottom',
+                                    padding: 4
+                                },
+                                itemStyle: {
+                                    areaColor: '#777',
+                                }
+                            },
+                            select: {
+                                label: {
+                                    backgroundColor: '#777',
+                                    color: '#fff',
+                                    position: 'bottom',
+                                    padding: 4
+                                },
+                                itemStyle: {
+                                    areaColor: '#777',
+                                }
+                            },
+                            label: {
+                                show: false
+                            },
+                            data: data
+                        }
+                    ]
+                };
+
+                chartElem.className = '';
+                chart.setOption(option);
+            });
+        }
     </script>
 </body>
 </html>
