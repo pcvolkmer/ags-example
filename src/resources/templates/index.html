@@ -224,12 +224,12 @@
             Array.from(document.getElementsByClassName('tabcontent')).forEach(e => e.className = 'tabcontent');
             document.getElementById(elem).className = 'tabcontent active';
 
-            if (elem === 'tab-2') {
-                showMap();
+            if (elem === 'tab-2' && document.querySelector('#chart canvas') === null) {
+                drawMap();
             }
         }
 
-        function showMap() {
+        function drawMap() {
             let chartElem = document.getElementById('chart');
 
             if (chartElem === null) {
@@ -238,7 +238,6 @@
 
             chartElem.innerText = '';
             chartElem.className = 'loading';
-            chartElem.setAttribute('_echarts_instance_', undefined);
 
             let chart = echarts.init(chartElem);
             let url = document.location.origin + document.location.pathname;
