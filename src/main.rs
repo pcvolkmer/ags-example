@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashMap};
+use std::env;
 use std::time::Duration;
 
 use askama::Template;
@@ -19,6 +20,7 @@ use serde::{Deserialize, Serialize};
 use strsim::jaro_winkler;
 #[cfg(debug_assertions)]
 use tower_http::trace::TraceLayer;
+use tracing::log::{error, info};
 
 static AGS_CSV: &str = include_str!("resources/ags.csv");
 
@@ -411,6 +413,21 @@ async fn main() {
     #[cfg(debug_assertions)]
     let app = app.layer(TraceLayer::new_for_http());
     
-    let listener = tokio::net::TcpListener::bind("[::]:3000").await.unwrap();
-    axum::serve(listener, app).await.unwrap()
+    let listener_address = env::var("LISTENER_ADDRESS").unwrap_or_else(|_| "[::]:3000".to_string());
+
+    match tokio::net::TcpListener::bind(listener_address).await {
+        Ok(listener) => {
+            let address = listener.local_addr().unwrap();
+            if address.is_ipv6() {
+                info!("Listening on [{}]:{}", address.ip(), address.port());
+            } else {
+                info!("Listening on {}:{}", address.ip(), address.port());
+            }
+            match axum::serve(listener, app).await {
+                Ok(_) => {}
+                Err(err) => error!("Unable to start application: {}", err),
+            }
+        }
+        Err(err) => error!("Unable to bind server port: {}", err),
+    }
 }
