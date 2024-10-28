@@ -9,8 +9,8 @@ license = "AGPL-3"
 axum = { version = "0.7" }
 askama = { version = "0.12" }
 askama_axum = { version = "0.4" }
-tokio = { version = "1.39", features = ["rt-multi-thread"] }
-tower-http = { version = "0.5", features = ["trace"] }
+tokio = { version = "1.41", features = ["rt-multi-thread"] }
+tower-http = { version = "0.6", features = ["trace"] }
 tracing-subscriber = "0.3"
 tracing = "0.1"
 
@@ -21,7 +21,7 @@ serde_json = {  version = "1.0" }
 itertools = { version = "0.13" }
 include_dir = "0.7"
 strsim = "0.11"
-regex = "1.10"
+regex = "1.11"
 lazy_static = "1.5"
 
 moka = { version = "0.12", features = ["future"] }
