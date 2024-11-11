@@ -4070,8 +4070,8 @@ ags,plz,ort,kreis,bundesland,lat,lon,lat_kreis,lon_kreis,deprecated,einwohner
 07132119,57632,Ziegenhain,Landkreis Altenkirchen,Rheinland-Pfalz,50.677017,7.5256753,50.752293,7.7982063,0,181
 07132201,57614,Berod bei Hachenburg,Landkreis Altenkirchen,Rheinland-Pfalz,50.64811,7.6914225,50.752293,7.7982063,0,589
 07132501,57610,Altenkirchen (Westerwald),Landkreis Altenkirchen,Rheinland-Pfalz,50.688362,7.6377854,50.752293,7.7982063,0,6525
-07132502,02681,Neitersen,Landkreis Altenkirchen,Rheinland-Pfalz,50.668123,7.585045,50.752293,7.7982063,0,1101
-07132502,02685,Neitersen,Landkreis Altenkirchen,Rheinland-Pfalz,50.668123,7.585045,50.752293,7.7982063,0,1101
+07132502,57638,Neitersen,Landkreis Altenkirchen,Rheinland-Pfalz,50.668123,7.585045,50.752293,7.7982063,0,1101
+07132502,57638,Neitersen,Landkreis Altenkirchen,Rheinland-Pfalz,50.668123,7.585045,50.752293,7.7982063,0,1101
 07133001,55568,Abtweiler,Landkreis Bad Kreuznach,Rheinland-Pfalz,49.743744,7.6560836,49.84904,7.862666,0,188
 07133002,55595,Allenfeld,Landkreis Bad Kreuznach,Rheinland-Pfalz,49.86769,7.668045,49.84904,7.862666,0,200
 07133003,55585,Altenbamberg,Landkreis Bad Kreuznach,Rheinland-Pfalz,49.78416,7.83207,49.84904,7.862666,0,812
