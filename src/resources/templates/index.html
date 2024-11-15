@@ -170,6 +170,9 @@
                 {% if entry.zip_collision %}
                 <a href="?q={{ entry.plz }}&st={{ entry.get_state_id() }}" class="tag link" title="Postleitzahl wird kreisübergreifend verwendet">Kreisübergreifende PLZ</a>
                 {% endif %}
+                {% if entry.primary_zip %}
+                <span class="tag success" title="Die Postleitzahl wird hier primär genutzt">Primäre Nutzung der PLZ</span>
+                {% endif %}
             </div>
             {% endif %}
         </div>

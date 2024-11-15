@@ -1,9 +1,12 @@
 :root {
-    --blue: #649ed7;
-    --darkblue: #44698E;
-
     --red: #d76464;
     --darkred: #8e4444;
+
+    --green: #64d764;
+    --darkgreen: #448e44;
+
+    --blue: #649ed7;
+    --darkblue: #44698E;
 }
 
 ::placeholder {
@@ -104,16 +107,15 @@ button:hover, a.button:hover {
 }
 
 .tag {
-    background-color: var(--blue);
-    color: white;
-    border: none;
+    color: #333;
     display: inline-block;
     cursor: help;
 
+    border: 3px solid var(--blue);
     border-radius: .5rem;
 
     font-size: .9rem;
-    padding: .2rem 1rem;
+    padding: .1rem .8rem;
     font-weight: normal;
 }
 
@@ -122,8 +124,10 @@ button:hover, a.button:hover {
 }
 
 .tag.link:hover {
-    background-color: var(--darkblue);
+    border-color: var(--darkblue);
     transition: background-color .1s;
+    background: var(--blue);
+    color: white;
 }
 
 .tag.link {
@@ -131,11 +135,16 @@ button:hover, a.button:hover {
 }
 
 .tag.warn {
-    background-color: var(--red);
+    border-color: var(--red);
+}
+
+.tag.success {
+    border-color: var(--green);
 }
 
 .tag.warn.link:hover {
-    background-color: var(--darkred);
+    border-color: var(--darkred);
+    background: var(--red);
 }
 
 label button {

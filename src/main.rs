@@ -36,23 +36,22 @@ lazy_static! {
 
 #[derive(Serialize, Deserialize, Clone)]
 struct GeoJson {
-    #[serde(rename="type")]
+    #[serde(rename = "type")]
     type_: String,
-    features: Vec<Feature>
+    features: Vec<Feature>,
 }
 
 impl GeoJson {
-
     fn new() -> GeoJson {
         Self {
             type_: "FeatureCollection".to_string(),
-            features: vec![]
+            features: vec![],
         }
     }
 
     fn all_features() -> Vec<Feature> {
         if let Ok(geo_json) = serde_json::from_str::<GeoJson>(GEO_JSON) {
-            return geo_json.features
+            return geo_json.features;
         }
         vec![]
     }
@@ -75,22 +74,22 @@ struct Feature {
 #[serde(tag = "type")]
 enum Geometry {
     Polygon(Polygon),
-    MultiPolygon(MultiPolygon)
+    MultiPolygon(MultiPolygon),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 struct MultiPolygon {
-    coordinates: Vec<Vec<Vec<Vec<f32>>>>
+    coordinates: Vec<Vec<Vec<Vec<f32>>>>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 struct Polygon {
-    coordinates: Vec<Vec<Vec<f32>>>
+    coordinates: Vec<Vec<Vec<f32>>>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 struct Properties {
-    name: String
+    name: String,
 }
 
 // AGS
@@ -112,7 +111,8 @@ struct Entry {
     deprecated: bool,
     einwohner: Option<String>,
     similarity: u8,
-    zip_collision: bool
+    zip_collision: bool,
+    primary_zip: bool,
 }
 
 impl Entry {
@@ -132,10 +132,11 @@ impl Entry {
             deprecated: record.get(9).unwrap_or("1") == "1",
             einwohner: match record.get(10).unwrap_or("") {
                 "" => None,
-                value => Some(value.to_string())
+                value => Some(value.to_string()),
             },
             similarity: 0,
-            zip_collision: false
+            zip_collision: false,
+            primary_zip: record.get(11).unwrap_or("0") == "1"
         }
     }
 
@@ -148,7 +149,7 @@ impl Entry {
         self.zip_collision = zip_collision;
         self
     }
-    
+
     fn get_state_id(&self) -> String {
         self.kreisschluessel[0..2].to_string()
     }
@@ -210,7 +211,7 @@ async fn find_entries(query: String, cache: Cache<String, Vec<Entry>>) -> Vec<En
         .unique()
         .map(|e| e.to_string())
         .collect_vec();
-    
+
     let entries = all_entries()
         .into_iter()
         .map(|entry| {
@@ -223,13 +224,13 @@ async fn find_entries(query: String, cache: Cache<String, Vec<Entry>>) -> Vec<En
         })
         .filter(|entry| entry.similarity >= 90)
         .sorted_by(|e1, e2| e2.similarity.cmp(&e1.similarity))
-        .sorted_by(|_, e2|
+        .sorted_by(|_, e2| {
             if e2.deprecated {
                 Ordering::Less
             } else {
                 Ordering::Equal
             }
-        )
+        })
         .take(25)
         .collect::<Vec<Entry>>();
 
@@ -239,11 +240,7 @@ async fn find_entries(query: String, cache: Cache<String, Vec<Entry>>) -> Vec<En
 }
 
 fn find_multiple_assigned_zips(state: &str) -> BTreeMap<String, Vec<String>> {
-    let state = if state.len() > 2 {
-        &state[0..2]
-    } else {
-        state
-    };
+    let state = if state.len() > 2 { &state[0..2] } else { state };
 
     let zips_in_state = all_entries()
         .iter()
@@ -264,15 +261,11 @@ fn find_multiple_assigned_zips(state: &str) -> BTreeMap<String, Vec<String>> {
         .filter(|e| zips_in_state.contains(e))
         .into_group_map_by(|entry| format!("{}...", &entry[0..1]))
         .into_iter()
-        .collect::<BTreeMap<_,_>>()
+        .collect::<BTreeMap<_, _>>()
 }
 
 fn find_counties_multiple_assigned_zips(state: &str) -> Vec<String> {
-    let state = if state.len() > 2 {
-        &state[0..2]
-    } else {
-        state
-    };
+    let state = if state.len() > 2 { &state[0..2] } else { state };
 
     let zips_in_state = all_entries()
         .iter()
@@ -298,19 +291,20 @@ async fn api_search(
     query: Query<HashMap<String, String>>,
 ) -> Response {
     if *query.get("ma").unwrap_or(&String::new()) == "1" {
-        return Json::from(find_multiple_assigned_zips(query.get("st").unwrap_or(&String::new()))).into_response();
+        return Json::from(find_multiple_assigned_zips(
+            query.get("st").unwrap_or(&String::new()),
+        ))
+        .into_response();
     }
 
     let query = query.get("q").unwrap_or(&String::new()).trim().to_string();
     Json::from(find_entries(query, cache).await).into_response()
 }
 
-async fn geojson(
-    query: Query<HashMap<String, String>>,
-) -> Response {
+async fn geojson(query: Query<HashMap<String, String>>) -> Response {
     let state = match query.get("st") {
         Some(state) => state.to_string(),
-        None => String::new()
+        None => String::new(),
     };
 
     let features = GeoJson::all_features()
@@ -318,16 +312,14 @@ async fn geojson(
         .filter(|&f| f.id.starts_with(&state))
         .cloned()
         .collect_vec();
-    
+
     Json::from(GeoJson::new().with_features(features)).into_response()
 }
 
-async fn asg_with_multiple_assigned_zip(
-    query: Query<HashMap<String, String>>,
-) -> Response {
+async fn asg_with_multiple_assigned_zip(query: Query<HashMap<String, String>>) -> Response {
     let state = match query.get("st") {
         Some(state) => state.to_string(),
-        None => String::new()
+        None => String::new(),
     };
 
     Json::from(find_counties_multiple_assigned_zips(&state)).into_response()
@@ -339,7 +331,7 @@ async fn index(
 ) -> IndexTemplate {
     let state = match query.get("st") {
         Some(state) => state.to_string(),
-        None => String::new()
+        None => String::new(),
     };
     let multiple_assigned = if *query.get("ma").unwrap_or(&String::new()) == "1" {
         find_multiple_assigned_zips(&state)
@@ -364,27 +356,32 @@ async fn negotiate(
     match headers.get(header::ACCEPT) {
         Some(header) => match header.to_str().unwrap_or_default() {
             "application/json" => api_search(state_cache, query).await.into_response(),
-            _ =>  match query.0.get("format") {
-                Some(format) if format == "json" => api_search(state_cache, query).await.into_response(),
-                _ => index(state_cache, query).await.into_response()
-            }
+            _ => match query.0.get("format") {
+                Some(format) if format == "json" => {
+                    api_search(state_cache, query).await.into_response()
+                }
+                _ => index(state_cache, query).await.into_response(),
+            },
         },
-        _ => {
-            index(state_cache, query).await.into_response()
-        }
+        _ => index(state_cache, query).await.into_response(),
     }
 }
 
 async fn serve_asset(path: Option<Path<String>>) -> impl IntoResponse {
     match path {
         Some(path) => match ASSETS.get_file(path.to_string()) {
-            Some(file) =>  Response::builder()
+            Some(file) => Response::builder()
                 .status(StatusCode::OK)
                 .body(Body::from(file.contents())),
-            None => Response::builder().status(404).body(Body::from("".as_bytes()))
-        }
-        None => Response::builder().status(400).body(Body::from("".as_bytes()))
-    }.unwrap()
+            None => Response::builder()
+                .status(404)
+                .body(Body::from("".as_bytes())),
+        },
+        None => Response::builder()
+            .status(400)
+            .body(Body::from("".as_bytes())),
+    }
+    .unwrap()
 }
 
 #[tokio::main]
@@ -407,12 +404,15 @@ async fn main() {
         .route("/geojson", get(geojson))
         .route("/counties_mu_zip", get(asg_with_multiple_assigned_zip))
         .route("/api", get(api_search))
-        .route("/assets/*path", get(|path| async { serve_asset(path).await }))
+        .route(
+            "/assets/*path",
+            get(|path| async { serve_asset(path).await }),
+        )
         .with_state(cache);
 
     #[cfg(debug_assertions)]
     let app = app.layer(TraceLayer::new_for_http());
-    
+
     let listener_address = env::var("LISTENER_ADDRESS").unwrap_or_else(|_| "[::]:3000".to_string());
 
     match tokio::net::TcpListener::bind(listener_address).await {
