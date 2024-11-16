@@ -10,7 +10,6 @@ use axum::http::{header, HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::{Json, Router};
-use csv::{ReaderBuilder, StringRecord};
 use include_dir::{include_dir, Dir};
 use itertools::Itertools;
 use lazy_static::lazy_static;
@@ -21,8 +20,7 @@ use strsim::jaro_winkler;
 #[cfg(debug_assertions)]
 use tower_http::trace::TraceLayer;
 use tracing::log::{error, info};
-
-static AGS_CSV: &str = include_str!("resources/ags.csv");
+use ags_example::ags::{all_entries, Entry};
 
 static GEO_JSON: &str = include_str!("resources/de_small.geojson");
 
@@ -92,69 +90,6 @@ struct Properties {
     name: String,
 }
 
-// AGS
-
-#[derive(Serialize, Deserialize, Clone)]
-struct Entry {
-    gemeindeschluessel: String,
-    kreisschluessel: String,
-    kreisfrei: bool,
-    plz: String,
-    ort: String,
-    lat: String,
-    lon: String,
-    #[serde(skip_serializing_if = "String::is_empty")]
-    kreis: String,
-    kreis_lat: String,
-    kreis_lon: String,
-    bundesland: String,
-    deprecated: bool,
-    einwohner: Option<String>,
-    similarity: u8,
-    zip_collision: bool,
-    primary_zip: bool,
-}
-
-impl Entry {
-    fn from_record(record: &StringRecord) -> Entry {
-        Self {
-            gemeindeschluessel: record.get(0).unwrap().to_string(),
-            kreisschluessel: record.get(0).unwrap()[0..5].to_string(),
-            kreisfrei: record.get(0).unwrap()[5..8].to_string() == "000",
-            plz: record.get(1).unwrap().to_string(),
-            ort: record.get(2).unwrap().to_string(),
-            lat: record.get(5).unwrap().to_string(),
-            lon: record.get(6).unwrap().to_string(),
-            kreis: record.get(3).unwrap().to_string(),
-            kreis_lat: record.get(7).unwrap().to_string(),
-            kreis_lon: record.get(8).unwrap().to_string(),
-            bundesland: record.get(4).unwrap().to_string(),
-            deprecated: record.get(9).unwrap_or("1") == "1",
-            einwohner: match record.get(10).unwrap_or("") {
-                "" => None,
-                value => Some(value.to_string()),
-            },
-            similarity: 0,
-            zip_collision: false,
-            primary_zip: record.get(11).unwrap_or("0") == "1"
-        }
-    }
-
-    fn with_similarity(mut self, similarity: u8) -> Entry {
-        self.similarity = similarity;
-        self
-    }
-
-    fn with_zip_collision(mut self, zip_collision: bool) -> Entry {
-        self.zip_collision = zip_collision;
-        self
-    }
-
-    fn get_state_id(&self) -> String {
-        self.kreisschluessel[0..2].to_string()
-    }
-}
-
 #[derive(Template)]
 #[template(path = "index.html")]
 struct IndexTemplate {
@@ -162,15 +97,6 @@ struct IndexTemplate {
     multiple_assigned: BTreeMap<String, Vec<String>>,
     state: String,
     entries: Vec<Entry>,
-}
-
-fn all_entries() -> Vec<Entry> {
-    ReaderBuilder::new()
-        .from_reader(AGS_CSV.as_bytes())
-        .records()
-        .flatten()
-        .map(|record| Entry::from_record(&record))
-        .collect_vec()
 }
 
 fn get_similarity(query: &str, entry: &Entry) -> u8 {
