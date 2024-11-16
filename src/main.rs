@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashMap};
-use std::env;
+use std::{env, path};
 use std::time::Duration;
 
 use askama::Template;
@@ -10,6 +10,7 @@ use axum::http::{header, HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::{Json, Router};
+use axum::http::header::CONTENT_TYPE;
 use include_dir::{include_dir, Dir};
 use itertools::Itertools;
 use lazy_static::lazy_static;
@@ -294,11 +295,31 @@ async fn negotiate(
 }
 
 async fn serve_asset(path: Option<Path<String>>) -> impl IntoResponse {
+    fn get_mimetype(path: &path::Path) -> Option<&str> {
+        if let Some(extension) = path.extension() {
+            return match extension.to_str() {
+                Some("css") => Some("text/css"),
+                Some("js") => Some("application/javascript"),
+                _ => None,
+            };
+        }
+        None
+    }
+
     match path {
         Some(path) => match ASSETS.get_file(path.to_string()) {
-            Some(file) => Response::builder()
-                .status(StatusCode::OK)
-                .body(Body::from(file.contents())),
+            Some(file) => {
+                if let Some(mime_type) = get_mimetype(file.path()) {
+                    Response::builder()
+                        .status(StatusCode::OK)
+                        .header(CONTENT_TYPE, mime_type)
+                        .body(Body::from(file.contents()))
+                } else {
+                    Response::builder()
+                        .status(StatusCode::OK)
+                        .body(Body::from(file.contents()))
+                }
+            }
             None => Response::builder()
                 .status(404)
                 .body(Body::from("".as_bytes())),
