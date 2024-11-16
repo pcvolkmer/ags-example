@@ -1,0 +1,17 @@
+{
+  "name": "ags-example",
+  "version": "0.1.0",
+  "description": "",
+  "dependencies": {
+    "echarts": "^5.5.1"
+  },
+  "devDependencies": {
+    "@rspack/core": "~1.0.14",
+    "@rspack/cli": "~1.0.14"
+  },
+  "scripts": {
+    "dev": "rspack build --watch --config ./web/rspack.config.js",
+    "build": "rspack build --config ./web/rspack.config.js"
+  },
+  "private": true
+}

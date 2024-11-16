@@ -1,3 +1,13 @@
+FROM node:alpine AS web
+
+WORKDIR /build
+COPY package.json ./
+COPY web ./web
+COPY src/resources/assets ./src/resources/assets
+
+RUN npm install
+RUN npm run build
+
 FROM rust:alpine AS build
 
 RUN apk update
@@ -7,6 +17,7 @@ WORKDIR /build
 COPY Cargo.toml ./
 COPY askama.toml ./
 COPY src ./src
+COPY --from=web /build/src/resources/assets/main.js ./src/resources/assets/main.js
 
 RUN cargo build --release
 

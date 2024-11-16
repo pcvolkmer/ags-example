@@ -1,4 +1,29 @@
-function debounce(func, timeout = 500) {
+import * as echarts from 'echarts/core';
+import { MapChart } from 'echarts/charts';
+
+import { CanvasRenderer } from 'echarts/renderers';
+
+import {
+    TitleComponent,
+    ToolboxComponent,
+    TooltipComponent,
+    DatasetComponent,
+    TransformComponent,
+    VisualMapComponent
+} from 'echarts/components';
+
+echarts.use([
+    MapChart,
+    TitleComponent,
+    ToolboxComponent,
+    TooltipComponent,
+    DatasetComponent,
+    TransformComponent,
+    CanvasRenderer,
+    VisualMapComponent
+]);
+
+export function debounce(func, timeout = 500) {
     let timer;
     return (...args) => {
         clearTimeout(timer);
@@ -6,7 +31,9 @@ function debounce(func, timeout = 500) {
     }
 }
 
-function updateDatalist(value) {
+window.debounce = debounce;
+
+export function updateDatalist(value) {
     let url = document.location.origin + document.location.pathname;
     fetch(`${url}?q=${value.trim()}`, { headers: new Headers({ 'Accept': 'application/json' })})
         .then(res => res.json())
@@ -26,9 +53,12 @@ function updateDatalist(value) {
         });
 }
 
-const updateDatalistDebounced = debounce((value) => updateDatalist(value));
+window.updateDatalist = updateDatalist;
 
-function selectTab(self, elem) {
+export const updateDatalistDebounced = debounce((value) => updateDatalist(value));
+window.updateDatalistDebounced = updateDatalistDebounced;
+
+export function selectTab(self, elem) {
     Array.from(document.getElementsByClassName('tab')).forEach(e => e.className = 'tab');
     self.className = 'tab active';
 
@@ -40,7 +70,9 @@ function selectTab(self, elem) {
     }
 }
 
-function drawMap() {
+window.selectTab = selectTab;
+
+export function drawMap() {
     let chartElem = document.getElementById('chart');
 
     if (chartElem === null) {
@@ -129,3 +161,5 @@ function drawMap() {
         chart.setOption(option);
     });
 }
+
+window.drawMap = drawMap;
