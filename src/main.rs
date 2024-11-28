@@ -1,16 +1,17 @@
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashMap};
-use std::{env, path};
 use std::time::Duration;
+use std::{env, path};
 
+use ags_example::ags::{all_entries, Entry};
 use askama::Template;
 use axum::body::Body;
 use axum::extract::{Path, Query, State};
+use axum::http::header::CONTENT_TYPE;
 use axum::http::{header, HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::{Json, Router};
-use axum::http::header::CONTENT_TYPE;
 use include_dir::{include_dir, Dir};
 use itertools::Itertools;
 use lazy_static::lazy_static;
@@ -21,7 +22,6 @@ use strsim::jaro_winkler;
 #[cfg(debug_assertions)]
 use tower_http::trace::TraceLayer;
 use tracing::log::{error, info};
-use ags_example::ags::{all_entries, Entry};
 
 static GEO_JSON: &str = include_str!("resources/de_small.geojson");
 
@@ -104,15 +104,14 @@ fn get_similarity(query: &str, entry: &Entry) -> u8 {
     if entry.plz.to_lowercase().starts_with(query)
         || entry.ort.to_lowercase().starts_with(query)
         || format!("{} {}", entry.plz, entry.ort.to_lowercase()).starts_with(query)
-    {
-        100
-    } else if match PLZ_RE.captures(query) {
-        Some(caps) => {
-            caps["plz"] == entry.plz
-                && jaro_winkler(&caps["ort"], &entry.ort.to_lowercase()) >= 0.85
+        || match PLZ_RE.captures(query) {
+            Some(caps) => {
+                caps["plz"] == entry.plz
+                    && jaro_winkler(&caps["ort"], &entry.ort.to_lowercase()) >= 0.85
+            }
+            _ => false,
         }
-        _ => false,
-    } {
+    {
         100
     } else if !PLZ_RE.is_match(query) {
         (100.0 * jaro_winkler(query, &entry.ort.to_lowercase())) as u8
