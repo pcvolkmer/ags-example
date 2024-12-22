@@ -1,8 +1,3 @@
-use std::cmp::Ordering;
-use std::collections::{BTreeMap, HashMap};
-use std::time::Duration;
-use std::{env, path};
-
 use ags_example::ags::{all_entries, Entry};
 use askama::Template;
 use axum::body::Body;
@@ -18,6 +13,10 @@ use lazy_static::lazy_static;
 use moka::future::Cache;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
+use std::collections::{BTreeMap, HashMap};
+use std::time::Duration;
+use std::{env, path};
 use strsim::jaro_winkler;
 #[cfg(debug_assertions)]
 use tower_http::trace::TraceLayer;
