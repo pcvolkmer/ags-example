@@ -2,6 +2,7 @@
 name = "ags-example"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.80.0"
 authors = ["Paul-Christian Volkmer <code@pcvolkmer.de>"]
 license = "AGPL-3"
 
@@ -20,7 +21,6 @@ itertools = { version = "0.13" }
 include_dir = "0.7"
 strsim = "0.11"
 regex = "1.11"
-lazy_static = "1.5"
 moka = { version = "0.12", features = ["future"] }
 
 [profile.release]

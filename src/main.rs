@@ -9,12 +9,12 @@ use axum::routing::get;
 use axum::{Json, Router};
 use include_dir::{include_dir, Dir};
 use itertools::Itertools;
-use lazy_static::lazy_static;
 use moka::future::Cache;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashMap};
+use std::sync::LazyLock;
 use std::time::Duration;
 use std::{env, path};
 use strsim::jaro_winkler;
@@ -26,9 +26,8 @@ static GEO_JSON: &str = include_str!("resources/de_small.geojson");
 
 static ASSETS: Dir = include_dir!("src/resources/assets");
 
-lazy_static! {
-    static ref PLZ_RE: Regex = Regex::new(r"^(?<plz>[0-9]{5})(\s+)(?<ort>.+)").unwrap();
-}
+static PLZ_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^(?<plz>[0-9]{5})(\s+)(?<ort>.+)").expect("valid regex"));
 
 // GeoJSON
 
